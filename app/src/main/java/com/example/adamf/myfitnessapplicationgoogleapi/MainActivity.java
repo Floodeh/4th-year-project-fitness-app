@@ -218,7 +218,7 @@ GoogleApiClient.OnConnectionFailedListener{
                             : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
                 }
             } else {
-                //Log.w(TAG, "There was a problem getting the step count.");
+                Log.w(TAG, "There was a problem getting the step count.");
             }
             return total;
         }
@@ -229,14 +229,14 @@ GoogleApiClient.OnConnectionFailedListener{
             super.onPostExecute(aLong);
 
             //Total steps covered for that day
-           // Log.i(TAG, "Total steps: " + aLong);
+           Log.i(TAG, "Total steps: " + aLong);
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), "Total Steps: " + aLong, Toast.LENGTH_SHORT).show();
-                }
-            });
+//            runOnUiThread(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(getApplicationContext(), "Total Steps: " + aLong, Toast.LENGTH_SHORT).show();
+//                }
+//            });
         }
     }
 
