@@ -8,12 +8,15 @@ import android.provider.ContactsContract;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.widget.Toast;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+
 
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.fitness.result.DailyTotalResult;
@@ -49,7 +52,7 @@ import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements OnDataPointListener,
 GoogleApiClient.ConnectionCallbacks,
-GoogleApiClient.OnConnectionFailedListener{
+GoogleApiClient.OnConnectionFailedListener {
 
     private Button mButtonViewWeek;
 
@@ -93,7 +96,7 @@ GoogleApiClient.OnConnectionFailedListener{
     protected void onStop() {
         super.onStop();
 
-        Fitness.SensorsApi.remove( mApiClient, this )
+        Fitness.SensorsApi.remove(mApiClient, this)
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
@@ -229,7 +232,7 @@ GoogleApiClient.OnConnectionFailedListener{
             super.onPostExecute(aLong);
 
             //Total steps covered for that day
-           Log.i(TAG, "Total steps: " + aLong);
+            Log.i(TAG, "Total steps: " + aLong);
 
 //            runOnUiThread(new Runnable() {
 //                @Override
@@ -243,7 +246,7 @@ GoogleApiClient.OnConnectionFailedListener{
     private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
         protected Long doInBackground(Object... params) {
             long total = 0;
-            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType. TYPE_CALORIES_EXPENDED);
+            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_CALORIES_EXPENDED);
             DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
             if (totalResult.getStatus().isSuccess()) {
                 DataSet totalSet = totalResult.getTotal();
@@ -267,6 +270,54 @@ GoogleApiClient.OnConnectionFailedListener{
             Log.i(TAG, "Total calories: " + aLong);
 
         }
+    }
+
+    public void subscribe() {
+        // To create a subscription, invoke the Recording API. As soon as the subscription is
+        // active, fitness data will start recording.
+        Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_STEP_COUNT_CUMULATIVE)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            if (status.getStatusCode()
+                                    == FitnessStatusCodes.SUCCESS_ALREADY_SUBSCRIBED) {
+                                Log.i(TAG, "Existing subscription for activity detected.");
+                            } else {
+                                Log.i(TAG, "Successfully subscribed!");
+                            }
+                        } else {
+                            Log.w(TAG, "There was a problem subscribing.");
+                        }
+                    }
+                });
+
+    }
+
+    private class VerifyDataTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+
+            long total = 0;
+
+            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
+            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            if (totalResult.getStatus().isSuccess()) {
+                DataSet totalSet = totalResult.getTotal();
+                total = totalSet.isEmpty()
+                        ? 0
+                        : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
+            } else {
+                Log.w(TAG, "There was a problem getting the step count.");
+            }
+
+            Log.i(TAG, "Total steps: " + total);
+
+            return null;
+        }
+    }
+
+    private void readData() {
+        new VerifyDataTask().execute();
     }
 }
 
