@@ -247,10 +247,10 @@ View.OnClickListener{
                 new ViewWeekStepCountTask().execute();
                 break;
             }
-//            case R.id.btn_view_today: {
-//                new ViewTodaysStepCountTask().execute();
-//                break;
-//            }
+            case R.id.btn_view_today: {
+                new ViewTodaysStepCountTask().execute();
+                break;
+            }
 //            case R.id.btn_add_steps: {
 //                new AddStepsToGoogleFitTask().execute();
 //                break;
@@ -340,6 +340,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewTodaysStepCountTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            displayStepDataForToday();
+            return null;
+        }
+    }
+
     private void displayLastWeeksData() {
         Calendar cal = Calendar.getInstance();
         Date now = new Date();
@@ -397,6 +404,10 @@ View.OnClickListener{
         }
     }
 
+    private void displayStepDataForToday() {
+        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+        showDataSet(result.getTotal());
+    }
 
 //total steps taken
     private class FetchStepsAsync extends AsyncTask<Object, Object, Long> {
