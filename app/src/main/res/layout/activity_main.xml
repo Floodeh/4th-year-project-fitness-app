@@ -25,17 +25,17 @@
         android:layout_height="wrap_content"
         android:text="View today's steps"/>
 
-    <Button
-        android:id="@+id/btn_add_steps"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Add step data for today" />
+    <!--<Button-->
+        <!--android:id="@+id/btn_add_steps"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Add step data for today" />-->
 
-    <Button
-        android:id="@+id/btn_update_steps"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Update step data for yesterday" />
+    <!--<Button-->
+        <!--android:id="@+id/btn_update_steps"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Update step data for yesterday" />-->
 
     <Button
         android:id="@+id/btn_delete_steps"
@@ -53,5 +53,28 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Cancel Subscriptions"/>
+
+
+    <!--<org.eazegraph.lib.charts.PieChart-->
+        <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
+        <!--android:id="@+id/piechart"-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="300dp"-->
+        <!--android:padding="8dp"-->
+        <!--app:egLegendTextSize="18sp"-->
+        <!--app:egUsePieRotation="true"-->
+        <!--app:egValueTextSize="36sp"/>-->
+
+    <org.eazegraph.lib.charts.ValueLineChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cubiclinechart"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        app:egUseCubic="true"
+        app:egUseOverlapFill="true"
+        app:egCurveSmoothness="0.4"
+        app:egIndicatorLineColor="#FE6DA8"
+        app:egLegendHeight="40dp"
+        app:egShowStandardValue="true"/>
 
 </LinearLayout>

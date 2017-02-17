@@ -1,5 +1,6 @@
 package com.example.adamf.myfitnessapplicationgoogleapi;
 
+import android.graphics.Color;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.content.IntentSender;
@@ -21,6 +22,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.fitness.data.Subscription;
+import com.google.android.gms.fitness.request.DataDeleteRequest;
+import com.google.android.gms.fitness.request.DataUpdateRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.ListSubscriptionsResult;
 import com.microsoft.windowsazure.mobileservices.*;
@@ -51,6 +54,14 @@ import com.google.android.gms.fitness.*;
 import com.google.android.gms.fitness.Fitness.*;
 
 
+import org.eazegraph.lib.charts.BarChart;
+import org.eazegraph.lib.charts.PieChart;
+import org.eazegraph.lib.charts.ValueLineChart;
+import org.eazegraph.lib.models.BarModel;
+import org.eazegraph.lib.models.PieModel;
+import org.eazegraph.lib.models.ValueLinePoint;
+import org.eazegraph.lib.models.ValueLineSeries;
+
 import java.util.concurrent.TimeUnit;
 
 public class MainActivity extends AppCompatActivity implements OnDataPointListener,
@@ -65,6 +76,8 @@ View.OnClickListener{
     private Button mButtonDeleteSteps;
     private Button mCancelSubscriptionsBtn;
     private Button mShowSubscriptionsBtn;
+
+
 
     private ResultCallback<Status> mSubscribeResultCallback;
     private ResultCallback<Status> mCancelSubscriptionResultCallback;
@@ -108,19 +121,45 @@ View.OnClickListener{
         mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
         mButtonViewToday = (Button) findViewById(R.id.btn_view_today);
-        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
-        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
+//        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
+//        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
         mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
-
-
 
         mButtonViewWeek.setOnClickListener(this);
         mButtonViewToday.setOnClickListener(this);
-        mButtonAddSteps.setOnClickListener(this);
-        mButtonUpdateSteps.setOnClickListener(this);
+//        mButtonAddSteps.setOnClickListener(this);
+//        mButtonUpdateSteps.setOnClickListener(this);
         mButtonDeleteSteps.setOnClickListener(this);
         mCancelSubscriptionsBtn.setOnClickListener(this);
         mShowSubscriptionsBtn.setOnClickListener(this);
+
+//        PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+//
+//        mPieChart.addPieSlice(new PieModel("Steps", 15, Color.parseColor("#FE6DA8")));
+//        mPieChart.addPieSlice(new PieModel("Goal", 25, Color.parseColor("#56B7F1")));
+//
+//        mPieChart.startAnimation();
+
+        ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart);
+
+        ValueLineSeries series = new ValueLineSeries();
+        series.setColor(0xFF56B7F1);
+
+        series.addPoint(new ValueLinePoint("Jan", 2.4f));
+        series.addPoint(new ValueLinePoint("Feb", 3.4f));
+        series.addPoint(new ValueLinePoint("Mar", .4f));
+        series.addPoint(new ValueLinePoint("Apr", 1.2f));
+        series.addPoint(new ValueLinePoint("Mai", 2.6f));
+        series.addPoint(new ValueLinePoint("Jun", 1.0f));
+        series.addPoint(new ValueLinePoint("Jul", 3.5f));
+        series.addPoint(new ValueLinePoint("Aug", 2.4f));
+        series.addPoint(new ValueLinePoint("Sep", 2.4f));
+        series.addPoint(new ValueLinePoint("Oct", 3.4f));
+        series.addPoint(new ValueLinePoint("Nov", .4f));
+        series.addPoint(new ValueLinePoint("Dec", 1.3f));
+
+        mCubicValueLineChart.addSeries(series);
+        mCubicValueLineChart.startAnimation();
     }
 
     private void initCallbacks() {
@@ -217,11 +256,21 @@ View.OnClickListener{
                 .setDataSourceTypes(DataSource.TYPE_RAW)
                 .build();
 
+        //Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_DISTANCE_CUMULATIVE);
+
+
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_STEP_COUNT_DELTA)
                 .setResultCallback(mSubscribeResultCallback);
+        //Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
+         //       .setResultCallback(mSubscribeResultCallback);
+        Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT)
+                .setResultCallback(mSubscribeResultCallback);
+        Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_CALORIES_EXPENDED)
+                .setResultCallback(mSubscribeResultCallback);
+
 
         new FetchStepsAsync().execute();
-        new FetchCalorieAsync().execute();
+        //new FetchCalorieAsync().execute();
 
 
         ResultCallback<DataSourcesResult> dataSourcesResultCallback = new ResultCallback<DataSourcesResult>() {
@@ -239,6 +288,7 @@ View.OnClickListener{
                 .setResultCallback(dataSourcesResultCallback);
 
     }
+
 
     @Override
     public void onClick(View v) {
@@ -259,10 +309,10 @@ View.OnClickListener{
 //                new UpdateStepsOnGoogleFitTask().execute();
 //                break;
 //            }
-//            case R.id.btn_delete_steps: {
-//                new DeleteYesterdaysStepsTask().execute();
-//                break;
-//            }
+            case R.id.btn_delete_steps: {
+                new DeleteYesterdaysStepsTask().execute();
+                break;
+            }
             case R.id.btn_cancel_subscriptions: {
                 cancelSubscriptions();
                 break;
@@ -347,6 +397,30 @@ View.OnClickListener{
         }
     }
 
+//    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
+//        protected Void doInBackground(Void... params) {
+//            addStepDataToGoogleFit();
+//            displayLastWeeksData();
+//            return null;
+//        }
+//    }
+//
+//    private class UpdateStepsOnGoogleFitTask extends AsyncTask<Void, Void, Void> {
+//        protected Void doInBackground(Void... params) {
+//            updateStepDataOnGoogleFit();
+//            displayLastWeeksData();
+//            return null;
+//        }
+//    }
+
+    private class DeleteYesterdaysStepsTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            deleteStepDataOnGoogleFit();
+            displayLastWeeksData();
+            return null;
+        }
+    }
+
     private void displayLastWeeksData() {
         Calendar cal = Calendar.getInstance();
         Date now = new Date();
@@ -385,6 +459,7 @@ View.OnClickListener{
                 showDataSet(dataSet);
             }
         }
+
     }
 
     private void showDataSet(DataSet dataSet) {
@@ -401,6 +476,7 @@ View.OnClickListener{
                 Log.e("History", "\tField: " + field.getName() +
                         " Value: " + dp.getValue(field));
             }
+
         }
     }
 
@@ -409,7 +485,85 @@ View.OnClickListener{
         showDataSet(result.getTotal());
     }
 
-//total steps taken
+    private void addStepDataToGoogleFit() {
+        //Adds steps spread out evenly from start time to end time
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.HOUR_OF_DAY, -1);
+        long startTime = cal.getTimeInMillis();
+
+        DataSource dataSource = new DataSource.Builder()
+                .setAppPackageName(this)
+                .setDataType(DataType.TYPE_STEP_COUNT_DELTA)
+                .setName("Step Count")
+                .setType(DataSource.TYPE_RAW)
+                .build();
+
+        int stepCountDelta = 1000000;
+        DataSet dataSet = DataSet.create(dataSource);
+
+        DataPoint point = dataSet.createDataPoint()
+                .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS);
+        point.getValue(Field.FIELD_STEPS).setInt(stepCountDelta);
+        dataSet.add(point);
+
+        Status status = Fitness.HistoryApi.insertData(mApiClient, dataSet).await(1, TimeUnit.MINUTES);
+
+        if (!status.isSuccess()) {
+            Log.e( "History", "Problem with inserting data: " + status.getStatusMessage());
+        } else {
+            Log.e( "History", "data inserted" );
+        }
+    }
+
+    private void updateStepDataOnGoogleFit() {
+        //If two entries overlap, the new data is dropped when trying to insert. Instead, you need to use update
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.HOUR_OF_DAY, -1);
+        long startTime = cal.getTimeInMillis();
+
+        DataSource dataSource = new DataSource.Builder()
+                .setAppPackageName(this)
+                .setDataType(DataType.TYPE_STEP_COUNT_DELTA)
+                .setName("Step Count")
+                .setType(DataSource.TYPE_RAW)
+                .build();
+
+        int stepCountDelta = 2000000;
+        DataSet dataSet = DataSet.create(dataSource);
+
+        DataPoint point = dataSet.createDataPoint()
+                .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS);
+        point.getValue(Field.FIELD_STEPS).setInt(stepCountDelta);
+        dataSet.add(point);
+
+        DataUpdateRequest updateRequest = new DataUpdateRequest.Builder().setDataSet(dataSet).setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS).build();
+        Fitness.HistoryApi.updateData(mApiClient, updateRequest).await(1, TimeUnit.MINUTES);
+    }
+
+    private void deleteStepDataOnGoogleFit() {
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.DAY_OF_YEAR, -1);
+        long startTime = cal.getTimeInMillis();
+
+        DataDeleteRequest request = new DataDeleteRequest.Builder()
+                .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
+                .addDataType(DataType.TYPE_STEP_COUNT_DELTA)
+                .build();
+
+        Fitness.HistoryApi.deleteData(mApiClient, request).await(1, TimeUnit.MINUTES);
+    }
+
+
+////total steps taken
     private class FetchStepsAsync extends AsyncTask<Object, Object, Long> {
         protected Long doInBackground(Object... params) {
             long total = 0;
@@ -445,34 +599,34 @@ View.OnClickListener{
         }
     }
 
-    private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
-        protected Long doInBackground(Object... params) {
-            long total = 0;
-            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_CALORIES_EXPENDED);
-            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
-            if (totalResult.getStatus().isSuccess()) {
-                DataSet totalSet = totalResult.getTotal();
-                if (totalSet != null) {
-                    total = totalSet.isEmpty()
-                            ? 0
-                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_CALORIES).asInt();
-                }
-            } else {
-                Log.w(TAG, "There was a problem getting the calories.");
-            }
-            return total;
-        }
-
-
-        @Override
-        protected void onPostExecute(Long aLong) {
-            super.onPostExecute(aLong);
-
-            //Total calories burned for that day
-            Log.i(TAG, "Total calories: " + aLong);
-
-        }
-    }
+//    private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
+//        protected Long doInBackground(Object... params) {
+//            long total = 0;
+//            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_CALORIES_EXPENDED);
+//            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+//            if (totalResult.getStatus().isSuccess()) {
+//                DataSet totalSet = totalResult.getTotal();
+//                if (totalSet != null) {
+//                    total = totalSet.isEmpty()
+//                            ? 0
+//                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_CALORIES).asInt();
+//                }
+//            } else {
+//                Log.w(TAG, "There was a problem getting the calories.");
+//            }
+//            return total;
+//        }
+//
+//
+//        @Override
+//        protected void onPostExecute(Long aLong) {
+//            super.onPostExecute(aLong);
+//
+//            //Total calories burned for that day
+//            Log.i(TAG, "Total calories: " + aLong);
+//
+//        }
+//    }
 
     public void subscribe() {
         // To create a subscription, invoke the Recording API. As soon as the subscription is
