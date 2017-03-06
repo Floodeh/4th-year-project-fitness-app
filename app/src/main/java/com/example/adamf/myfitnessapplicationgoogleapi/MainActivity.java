@@ -114,6 +114,7 @@ View.OnClickListener{
                 .addOnConnectionFailedListener(this)
                 //.enableAutoManage(this, 0, this)
                 .build();
+
     }
 
     private void initViews() {
@@ -133,12 +134,20 @@ View.OnClickListener{
         mCancelSubscriptionsBtn.setOnClickListener(this);
         mShowSubscriptionsBtn.setOnClickListener(this);
 
-        PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
 
-        mPieChart.addPieSlice(new PieModel("Steps", 15, Color.parseColor("#FE6DA8")));
-        mPieChart.addPieSlice(new PieModel("Goal", 25, Color.parseColor("#56B7F1")));
+        //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+        //showDataSet(result.getTotal());
 
-        mPieChart.startAnimation();
+        //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+        //String adam = result.toString();
+        //int adamflood = Integer.parseInt(adam);
+
+//        PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+//
+//        mPieChart.addPieSlice(new PieModel("Steps", adamsInt,Color.parseColor("#FE6DA8")));
+//        mPieChart.addPieSlice(new PieModel("Goal", stepGoal, Color.parseColor("#56B7F1")));
+//
+//        mPieChart.startAnimation();
 
 //        ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart);
 //
@@ -590,6 +599,14 @@ View.OnClickListener{
             //Total steps covered for that day
             Log.i(TAG, "Total steps: " + aLong);
 
+            String adam = aLong.toString();
+            int adamVal = Integer.parseInt(adam);
+            PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+
+            mPieChart.addPieSlice(new PieModel("Steps", adamVal,Color.parseColor("#FE6DA8")));
+            mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+
+            mPieChart.startAnimation();
 //            runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
