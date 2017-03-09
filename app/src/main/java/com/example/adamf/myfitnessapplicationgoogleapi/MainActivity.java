@@ -71,6 +71,7 @@ View.OnClickListener{
 
     private Button mButtonViewWeek;
     private Button mButtonViewToday;
+    private Button mButtonViewTodayTime;
     private Button mButtonAddSteps;
     private Button mButtonUpdateSteps;
     private Button mButtonDeleteSteps;
@@ -110,6 +111,8 @@ View.OnClickListener{
                 .addApi(Fitness.GOALS_API)
                 .addApi(Fitness.SESSIONS_API)
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
+                .addScope(new Scope(Scopes.FITNESS_LOCATION_READ_WRITE))
+                .addScope(new Scope(Scopes.FITNESS_BODY_READ_WRITE))
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
                 //.enableAutoManage(this, 0, this)
@@ -122,12 +125,14 @@ View.OnClickListener{
         mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
         mButtonViewToday = (Button) findViewById(R.id.btn_view_today);
+        mButtonViewTodayTime = (Button) findViewById(R.id.btn_view_today_time);
 //        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
 //        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
         mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
 
         mButtonViewWeek.setOnClickListener(this);
         mButtonViewToday.setOnClickListener(this);
+        mButtonViewTodayTime.setOnClickListener(this);
 //        mButtonAddSteps.setOnClickListener(this);
 //        mButtonUpdateSteps.setOnClickListener(this);
         mButtonDeleteSteps.setOnClickListener(this);
@@ -265,20 +270,28 @@ View.OnClickListener{
                 .setDataSourceTypes(DataSource.TYPE_RAW)
                 .build();
 
+        DataSourcesRequest dataSourceRequest1 = new DataSourcesRequest.Builder()
+                .setDataTypes(DataType.TYPE_ACTIVITY_SEGMENT)
+                .setDataSourceTypes(DataSource.TYPE_RAW)
+                .build();
+
         //Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_DISTANCE_CUMULATIVE);
 
 
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_STEP_COUNT_DELTA)
                 .setResultCallback(mSubscribeResultCallback);
         //Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
-         //       .setResultCallback(mSubscribeResultCallback);
+        //      .setResultCallback(mSubscribeResultCallback);
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT)
+                .setResultCallback(mSubscribeResultCallback);
+        Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_ACTIVITY_SAMPLES)
                 .setResultCallback(mSubscribeResultCallback);
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_CALORIES_EXPENDED)
                 .setResultCallback(mSubscribeResultCallback);
 
 
         new FetchStepsAsync().execute();
+        new FetchTimeAsync().execute();
         //new FetchCalorieAsync().execute();
 
 
@@ -296,6 +309,9 @@ View.OnClickListener{
         Fitness.SensorsApi.findDataSources(mApiClient, dataSourceRequest)
                 .setResultCallback(dataSourcesResultCallback);
 
+        Fitness.SensorsApi.findDataSources(mApiClient, dataSourceRequest1)
+                .setResultCallback(dataSourcesResultCallback);
+
     }
 
 
@@ -308,6 +324,10 @@ View.OnClickListener{
             }
             case R.id.btn_view_today: {
                 new ViewTodaysStepCountTask().execute();
+                break;
+            }
+            case R.id.btn_view_today_time: {
+                new ViewTodaysTimeCountTask().execute();
                 break;
             }
 //            case R.id.btn_add_steps: {
@@ -406,6 +426,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewTodaysTimeCountTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            displayTimeDataForToday();
+            return null;
+        }
+    }
+
 //    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
 //        protected Void doInBackground(Void... params) {
 //            addStepDataToGoogleFit();
@@ -491,6 +518,11 @@ View.OnClickListener{
 
     private void displayStepDataForToday() {
         DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+        showDataSet(result.getTotal());
+    }
+
+    private void displayTimeDataForToday() {
+        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_ACTIVITY_SEGMENT ).await(1, TimeUnit.MINUTES);
         showDataSet(result.getTotal());
     }
 
@@ -599,20 +631,42 @@ View.OnClickListener{
             //Total steps covered for that day
             Log.i(TAG, "Total steps: " + aLong);
 
-            String adam = aLong.toString();
-            int adamVal = Integer.parseInt(adam);
-            PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
-
-            mPieChart.addPieSlice(new PieModel("Steps", adamVal,Color.parseColor("#FE6DA8")));
-            mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
-
-            mPieChart.startAnimation();
 //            runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
 //                    Toast.makeText(getApplicationContext(), "Total Steps: " + aLong, Toast.LENGTH_SHORT).show();
 //                }
 //            });
+        }
+    }
+
+    ////total steps taken
+    private class FetchTimeAsync extends AsyncTask<Object, Object, Long> {
+        protected Long doInBackground(Object... params) {
+            long total = 0;
+            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT);
+            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            if (totalResult.getStatus().isSuccess()) {
+                DataSet totalSet = totalResult.getTotal();
+                if (totalSet != null) {
+                    total = totalSet.isEmpty()
+                            ? 0
+                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_DURATION).asInt();
+                }
+            } else {
+                Log.w(TAG, "There was a problem getting the time count.");
+            }
+            return total;
+        }
+
+
+        @Override
+        protected void onPostExecute(final Long aLong) {
+            super.onPostExecute(aLong);
+
+            //Total steps covered for that day
+            Log.i(TAG, "Total time: " + aLong);
+
         }
     }
 
