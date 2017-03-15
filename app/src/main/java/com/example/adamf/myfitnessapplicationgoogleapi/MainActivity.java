@@ -72,6 +72,7 @@ View.OnClickListener{
     private Button mButtonViewWeek;
     private Button mButtonViewToday;
     private Button mButtonViewTodayTime;
+    private Button mButtonViewTodayCalorie;
     private Button mButtonAddSteps;
     private Button mButtonUpdateSteps;
     private Button mButtonDeleteSteps;
@@ -126,6 +127,8 @@ View.OnClickListener{
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
         mButtonViewToday = (Button) findViewById(R.id.btn_view_today);
         mButtonViewTodayTime = (Button) findViewById(R.id.btn_view_today_time);
+        mButtonViewTodayCalorie = (Button) findViewById(R.id.btn_view_today_calorie);
+        //mButtonViewTodayDistance = (Button) findViewById(R.id.btn_view_today_distance);
 //        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
 //        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
         mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
@@ -133,6 +136,7 @@ View.OnClickListener{
         mButtonViewWeek.setOnClickListener(this);
         mButtonViewToday.setOnClickListener(this);
         mButtonViewTodayTime.setOnClickListener(this);
+        mButtonViewTodayCalorie.setOnClickListener(this);
 //        mButtonAddSteps.setOnClickListener(this);
 //        mButtonUpdateSteps.setOnClickListener(this);
         mButtonDeleteSteps.setOnClickListener(this);
@@ -330,6 +334,10 @@ View.OnClickListener{
                 new ViewTodaysTimeCountTask().execute();
                 break;
             }
+            case R.id.btn_view_today_calorie: {
+                new ViewTodaysCalorieCountTask().execute();
+                break;
+            }
 //            case R.id.btn_add_steps: {
 //                new AddStepsToGoogleFitTask().execute();
 //                break;
@@ -433,6 +441,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewTodaysCalorieCountTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            displayCalorieDataForToday();
+            return null;
+        }
+    }
+
 //    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
 //        protected Void doInBackground(Void... params) {
 //            addStepDataToGoogleFit();
@@ -523,6 +538,11 @@ View.OnClickListener{
 
     private void displayTimeDataForToday() {
         DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_ACTIVITY_SEGMENT ).await(1, TimeUnit.MINUTES);
+        showDataSet(result.getTotal());
+    }
+
+    private void displayCalorieDataForToday() {
+        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_CALORIES_EXPENDED ).await(1, TimeUnit.MINUTES);
         showDataSet(result.getTotal());
     }
 
@@ -640,7 +660,7 @@ View.OnClickListener{
         }
     }
 
-    ////total steps taken
+    ////total time active
     private class FetchTimeAsync extends AsyncTask<Object, Object, Long> {
         protected Long doInBackground(Object... params) {
             long total = 0;
@@ -673,7 +693,7 @@ View.OnClickListener{
 //    private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
 //        protected Long doInBackground(Object... params) {
 //            long total = 0;
-//            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_CALORIES_EXPENDED);
+//            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType. TYPE_CALORIES_EXPENDED);
 //            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
 //            if (totalResult.getStatus().isSuccess()) {
 //                DataSet totalSet = totalResult.getTotal();
