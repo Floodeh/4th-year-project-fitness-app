@@ -71,6 +71,7 @@ View.OnClickListener{
 
     private Button mButtonViewWeek;
     private Button mButtonViewWeekCalorie;
+    private Button mButtonViewWeekTime;
     private Button mButtonViewToday;
     private Button mButtonViewTodayTime;
     private Button mButtonViewTodayCalorie;
@@ -128,6 +129,7 @@ View.OnClickListener{
         mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
         mButtonViewWeekCalorie = (Button) findViewById(R.id.btn_view_week_calorie);
+        mButtonViewWeekTime = (Button) findViewById(R.id.btn_view_week_time);
         mButtonViewToday = (Button) findViewById(R.id.btn_view_today);
         mButtonViewTodayTime = (Button) findViewById(R.id.btn_view_today_time);
         mButtonViewTodayCalorie = (Button) findViewById(R.id.btn_view_today_calorie);
@@ -138,6 +140,7 @@ View.OnClickListener{
 
         mButtonViewWeek.setOnClickListener(this);
         mButtonViewWeekCalorie.setOnClickListener(this);
+        mButtonViewWeekTime.setOnClickListener(this);
         mButtonViewToday.setOnClickListener(this);
         mButtonViewTodayTime.setOnClickListener(this);
         mButtonViewTodayCalorie.setOnClickListener(this);
@@ -300,7 +303,7 @@ View.OnClickListener{
 
 
         new FetchStepsAsync().execute();
-        new FetchTimeAsync().execute();
+        //new FetchTimeAsync().execute();
         //new FetchCalorieAsync().execute();
 
 
@@ -337,6 +340,10 @@ View.OnClickListener{
             }
             case R.id.btn_view_today_time: {
                 new ViewTodaysTimeCountTask().execute();
+                break;
+            }
+            case R.id.btn_view_week_time: {
+                new ViewWeekTimeCountTask().execute();
                 break;
             }
             case R.id.btn_view_today_calorie: {
@@ -447,6 +454,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewWeekTimeCountTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            displayLastWeeksTimeData();
+            return null;
+        }
+    }
+
     private class ViewTodaysStepCountTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             displayStepDataForToday();
@@ -552,9 +566,50 @@ View.OnClickListener{
         Log.e("History", "Range Start: " + dateFormat.format(startTime));
         Log.e("History", "Range End: " + dateFormat.format(endTime));
 
-        //Check how many steps were walked and recorded in the last 7 days
+        //Check how many calories were burned and recorded in the last 7 days
         DataReadRequest readRequest = new DataReadRequest.Builder()
                 .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                .build();
+
+        DataReadResult dataReadResult = Fitness.HistoryApi.readData(mApiClient, readRequest).await(1, TimeUnit.MINUTES);
+
+        //Used for aggregated data
+        if (dataReadResult.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult.getBuckets().size());
+            for (Bucket bucket : dataReadResult.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    showDataSet(dataSet);
+                }
+            }
+        }
+        //Used for non-aggregated data
+        else if (dataReadResult.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult.getDataSets().size());
+            for (DataSet dataSet : dataReadResult.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+    }
+
+    private void displayLastWeeksTimeData() {
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.WEEK_OF_YEAR, -1);
+        long startTime = cal.getTimeInMillis();
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime));
+        Log.e("History", "Range End: " + dateFormat.format(endTime));
+
+        //Check how much time was spent active in the last 7 days
+        DataReadRequest readRequest = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_ACTIVITY_SEGMENT, DataType.AGGREGATE_ACTIVITY_SUMMARY)
                 .bucketByTime(1, TimeUnit.DAYS)
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
                 .build();
@@ -734,34 +789,34 @@ View.OnClickListener{
     }
 
     ////total time active
-    private class FetchTimeAsync extends AsyncTask<Object, Object, Long> {
-        protected Long doInBackground(Object... params) {
-            long total = 0;
-            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT);
-            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
-            if (totalResult.getStatus().isSuccess()) {
-                DataSet totalSet = totalResult.getTotal();
-                if (totalSet != null) {
-                    total = totalSet.isEmpty()
-                            ? 0
-                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_DURATION).asInt();
-                }
-            } else {
-                Log.w(TAG, "There was a problem getting the time count.");
-            }
-            return total;
-        }
-
-
-        @Override
-        protected void onPostExecute(final Long aLong) {
-            super.onPostExecute(aLong);
-
-            //Total steps covered for that day
-            Log.i(TAG, "Total time: " + aLong);
-
-        }
-    }
+//    private class FetchTimeAsync extends AsyncTask<Object, Object, Long> {
+//        protected Long doInBackground(Object... params) {
+//            long total = 0;
+//            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT);
+//            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+//            if (totalResult.getStatus().isSuccess()) {
+//                DataSet totalSet = totalResult.getTotal();
+//                if (totalSet != null) {
+//                    total = totalSet.isEmpty()
+//                            ? 0
+//                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_DURATION).asInt();
+//                }
+//            } else {
+//                Log.w(TAG, "There was a problem getting the time count.");
+//            }
+//            return total;
+//        }
+//
+//
+//        @Override
+//        protected void onPostExecute(final Long aLong) {
+//            super.onPostExecute(aLong);
+//
+//            //Total steps covered for that day
+//            Log.i(TAG, "Total time: " + aLong);
+//
+//        }
+//    }
 
 //    private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
 //        protected Long doInBackground(Object... params) {

@@ -31,6 +31,13 @@
         android:text="View this weeks Calories" />
 
     <Button
+        android:paddingTop="16dp"
+        android:id="@+id/btn_view_week_time"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View this weeks Time" />
+
+    <Button
         android:id="@+id/btn_view_today"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
