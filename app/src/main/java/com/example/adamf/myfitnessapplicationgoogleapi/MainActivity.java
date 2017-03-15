@@ -70,9 +70,11 @@ GoogleApiClient.OnConnectionFailedListener,
 View.OnClickListener{
 
     private Button mButtonViewWeek;
+    private Button mButtonViewWeekCalorie;
     private Button mButtonViewToday;
     private Button mButtonViewTodayTime;
     private Button mButtonViewTodayCalorie;
+    private Button mButtonViewTodayDistance;
     private Button mButtonAddSteps;
     private Button mButtonUpdateSteps;
     private Button mButtonDeleteSteps;
@@ -125,18 +127,21 @@ View.OnClickListener{
         mCancelSubscriptionsBtn = (Button) findViewById(R.id.btn_cancel_subscriptions);
         mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
+        mButtonViewWeekCalorie = (Button) findViewById(R.id.btn_view_week_calorie);
         mButtonViewToday = (Button) findViewById(R.id.btn_view_today);
         mButtonViewTodayTime = (Button) findViewById(R.id.btn_view_today_time);
         mButtonViewTodayCalorie = (Button) findViewById(R.id.btn_view_today_calorie);
-        //mButtonViewTodayDistance = (Button) findViewById(R.id.btn_view_today_distance);
+        mButtonViewTodayDistance = (Button) findViewById(R.id.btn_view_today_distance);
 //        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
 //        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
         mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
 
         mButtonViewWeek.setOnClickListener(this);
+        mButtonViewWeekCalorie.setOnClickListener(this);
         mButtonViewToday.setOnClickListener(this);
         mButtonViewTodayTime.setOnClickListener(this);
         mButtonViewTodayCalorie.setOnClickListener(this);
+        mButtonViewTodayDistance.setOnClickListener(this);
 //        mButtonAddSteps.setOnClickListener(this);
 //        mButtonUpdateSteps.setOnClickListener(this);
         mButtonDeleteSteps.setOnClickListener(this);
@@ -147,14 +152,14 @@ View.OnClickListener{
         //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
         //showDataSet(result.getTotal());
 
-        //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-        //String adam = result.toString();
-        //int adamflood = Integer.parseInt(adam);
-
+//        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+//        String adam = result.toString();
+//        int adamflood = Integer.parseInt(adam);
+//
 //        PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
 //
-//        mPieChart.addPieSlice(new PieModel("Steps", adamsInt,Color.parseColor("#FE6DA8")));
-//        mPieChart.addPieSlice(new PieModel("Goal", stepGoal, Color.parseColor("#56B7F1")));
+//        mPieChart.addPieSlice(new PieModel("Steps", 5000,Color.parseColor("#FE6DA8")));
+//        mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
 //
 //        mPieChart.startAnimation();
 
@@ -338,6 +343,14 @@ View.OnClickListener{
                 new ViewTodaysCalorieCountTask().execute();
                 break;
             }
+            case R.id.btn_view_week_calorie: {
+                new ViewWeekCalorieCountTask().execute();
+                break;
+            }
+//            case R.id.btn_view_today_distance: {
+//                new ViewTodaysDistanceCountTask().execute();
+//                break;
+//            }
 //            case R.id.btn_add_steps: {
 //                new AddStepsToGoogleFitTask().execute();
 //                break;
@@ -427,6 +440,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewWeekCalorieCountTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            displayLastWeeksCaloriesData();
+            return null;
+        }
+    }
+
     private class ViewTodaysStepCountTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             displayStepDataForToday();
@@ -447,6 +467,13 @@ View.OnClickListener{
             return null;
         }
     }
+
+//    private class ViewTodaysDistanceCountTask extends AsyncTask<Void, Void, Void> {
+//        protected Void doInBackground(Void... params) {
+//            displayDistanceDataForToday();
+//            return null;
+//        }
+//    }
 
 //    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
 //        protected Void doInBackground(Void... params) {
@@ -513,6 +540,47 @@ View.OnClickListener{
 
     }
 
+    private void displayLastWeeksCaloriesData() {
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.WEEK_OF_YEAR, -1);
+        long startTime = cal.getTimeInMillis();
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime));
+        Log.e("History", "Range End: " + dateFormat.format(endTime));
+
+        //Check how many steps were walked and recorded in the last 7 days
+        DataReadRequest readRequest = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                .build();
+
+        DataReadResult dataReadResult = Fitness.HistoryApi.readData(mApiClient, readRequest).await(1, TimeUnit.MINUTES);
+
+        //Used for aggregated data
+        if (dataReadResult.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult.getBuckets().size());
+            for (Bucket bucket : dataReadResult.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    showDataSet(dataSet);
+                }
+            }
+        }
+        //Used for non-aggregated data
+        else if (dataReadResult.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult.getDataSets().size());
+            for (DataSet dataSet : dataReadResult.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+    }
+
     private void showDataSet(DataSet dataSet) {
         Log.e("History", "Data returned for Data type: " + dataSet.getDataType().getName());
         DateFormat dateFormat = DateFormat.getDateInstance();
@@ -545,6 +613,11 @@ View.OnClickListener{
         DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_CALORIES_EXPENDED ).await(1, TimeUnit.MINUTES);
         showDataSet(result.getTotal());
     }
+
+//    private void displayDistanceDataForToday() {
+//        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+//        showDataSet(result.getTotal());
+//    }
 
     private void addStepDataToGoogleFit() {
         //Adds steps spread out evenly from start time to end time

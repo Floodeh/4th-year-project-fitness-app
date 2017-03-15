@@ -20,6 +20,13 @@
         android:text="View this weeks steps" />
 
     <Button
+        android:paddingTop="16dp"
+        android:id="@+id/btn_view_week_calorie"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="View this weeks Calories" />
+
+    <Button
         android:id="@+id/btn_view_today"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
