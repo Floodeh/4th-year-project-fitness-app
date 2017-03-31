@@ -12,6 +12,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.TextView;
 import android.widget.Toast;
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -64,6 +65,9 @@ import org.eazegraph.lib.models.ValueLineSeries;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.google.android.gms.fitness.data.Field.FIELD_STEPS;
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 public class MainActivity extends AppCompatActivity implements OnDataPointListener,
 GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener,
@@ -95,6 +99,8 @@ View.OnClickListener{
     private GoogleApiClient mApiClient;
     String TAG = "YOUR-TAG-NAME";
 
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -104,7 +110,7 @@ View.OnClickListener{
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
 
-        initViews();
+        //initViews();
         initCallbacks();
 
 
@@ -122,9 +128,14 @@ View.OnClickListener{
                 //.enableAutoManage(this, 0, this)
                 .build();
 
+        initViews();
     }
 
     private void initViews() {
+
+        //TextView textView = (TextView) findViewById(R.id.textView01);
+        //textView.setText("Today's Steps: ");
+
         mCancelSubscriptionsBtn = (Button) findViewById(R.id.btn_cancel_subscriptions);
         mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
@@ -137,6 +148,7 @@ View.OnClickListener{
 //        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
 //        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
         mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
+
 
         mButtonViewWeek.setOnClickListener(this);
         mButtonViewWeekCalorie.setOnClickListener(this);
@@ -152,8 +164,13 @@ View.OnClickListener{
         mShowSubscriptionsBtn.setOnClickListener(this);
 
 
+
+
+
+
         //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
         //showDataSet(result.getTotal());
+
 
 //        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
 //        String adam = result.toString();
@@ -261,7 +278,7 @@ View.OnClickListener{
         SensorRequest request = new SensorRequest.Builder()
                 .setDataSource(dataSource)
                 .setDataType(dataType)
-                .setSamplingRate(2, TimeUnit.SECONDS)
+                .setSamplingRate(2, SECONDS)
                 .build();
 
         Fitness.SensorsApi.add(mApiClient, request, this)
@@ -287,7 +304,13 @@ View.OnClickListener{
                 .setDataSourceTypes(DataSource.TYPE_RAW)
                 .build();
 
+        DataSourcesRequest dataSourceRequest2 = new DataSourcesRequest.Builder()
+                .setDataTypes(DataType.TYPE_CALORIES_EXPENDED)
+                .setDataSourceTypes(DataSource.TYPE_RAW)
+                .build();
+
         //Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_DISTANCE_CUMULATIVE);
+
 
 
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_STEP_COUNT_DELTA)
@@ -307,12 +330,40 @@ View.OnClickListener{
         //new FetchCalorieAsync().execute();
 
 
+        //Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
+
+        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+
+        mBarChart.addBar(new BarModel(600, 0xFF123456));
+        mBarChart.addBar(new BarModel(2.f,  0xFF343456));
+        mBarChart.addBar(new BarModel(3.3f, 0xFF563456));
+        mBarChart.addBar(new BarModel(1.1f, 0xFF873F56));
+        mBarChart.addBar(new BarModel(2.7f, 0xFF56B7F1));
+        mBarChart.addBar(new BarModel(2.f,  0xFF343456));
+        mBarChart.addBar(new BarModel(0.4f, 0xFF1FF4AC));
+        mBarChart.addBar(new BarModel(4.f,  0xFF1BA4E6));
+
+        mBarChart.startAnimation();
+
         ResultCallback<DataSourcesResult> dataSourcesResultCallback = new ResultCallback<DataSourcesResult>() {
             @Override
             public void onResult(DataSourcesResult dataSourcesResult) {
                 for (DataSource dataSource : dataSourcesResult.getDataSources()) {
                     if (DataType.TYPE_STEP_COUNT_CUMULATIVE.equals(dataSource.getDataType())) {
                         registerFitnessDataListener(dataSource, DataType.TYPE_STEP_COUNT_CUMULATIVE);
+
+                    }
+                }
+            }
+        };
+
+        ResultCallback<DataSourcesResult> dataSourcesResultCallback1 = new ResultCallback<DataSourcesResult>() {
+            @Override
+            public void onResult(DataSourcesResult dataSourcesResult) {
+                for (DataSource dataSource : dataSourcesResult.getDataSources()) {
+                    if (DataType.TYPE_CALORIES_EXPENDED.equals(dataSource.getDataType())) {
+                        registerFitnessDataListener(dataSource, DataType.TYPE_CALORIES_EXPENDED);
+
                     }
                 }
             }
@@ -323,6 +374,9 @@ View.OnClickListener{
 
         Fitness.SensorsApi.findDataSources(mApiClient, dataSourceRequest1)
                 .setResultCallback(dataSourcesResultCallback);
+
+        Fitness.SensorsApi.findDataSources(mApiClient, dataSourceRequest2)
+                .setResultCallback(dataSourcesResultCallback1);
 
     }
 
@@ -440,6 +494,7 @@ View.OnClickListener{
         }
     }
 
+
     private class ViewWeekStepCountTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             displayLastWeeksData();
@@ -512,6 +567,7 @@ View.OnClickListener{
             return null;
         }
     }
+
 
     private void displayLastWeeksData() {
         Calendar cal = Calendar.getInstance();
@@ -638,8 +694,8 @@ View.OnClickListener{
 
     private void showDataSet(DataSet dataSet) {
         Log.e("History", "Data returned for Data type: " + dataSet.getDataType().getName());
-        DateFormat dateFormat = DateFormat.getDateInstance();
-        DateFormat timeFormat = DateFormat.getTimeInstance();
+        final DateFormat dateFormat = DateFormat.getDateInstance();
+        final DateFormat timeFormat = DateFormat.getTimeInstance();
 
         for (DataPoint dp : dataSet.getDataPoints()) {
             Log.e("History", "Data point:");
@@ -649,7 +705,18 @@ View.OnClickListener{
             for(Field field : dp.getDataType().getFields()) {
                 Log.e("History", "\tField: " + field.getName() +
                         " Value: " + dp.getValue(field));
+
+                final DataPoint adamDp = dp;
+                final Field adamField = field;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Toast.makeText(getApplicationContext(), "History for: " + adamField.getName() + "\t\tStart: " + dateFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + "\t\tEnd: " + dateFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + "\tValue: " + adamDp.getValue(adamField), Toast.LENGTH_SHORT).show();
+                    }
+                });
+
             }
+
 
         }
     }
@@ -657,6 +724,21 @@ View.OnClickListener{
     private void displayStepDataForToday() {
         DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
         showDataSet(result.getTotal());
+
+        //Trying to get the step count value for today
+        PendingResult<DailyTotalResult> result1 =
+                Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
+        DailyTotalResult totalResult = result1.await(30, SECONDS);
+        if (totalResult.getStatus().isSuccess()) {
+            DataSet totalSet = totalResult.getTotal();
+            long total = totalSet.isEmpty()
+                    ? 0
+                    : totalSet.getDataPoints().get(0).getValue(FIELD_STEPS).asInt();
+        } else {
+            // handle failure
+        }
+
+
     }
 
     private void displayTimeDataForToday() {
@@ -695,7 +777,7 @@ View.OnClickListener{
 
         DataPoint point = dataSet.createDataPoint()
                 .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS);
-        point.getValue(Field.FIELD_STEPS).setInt(stepCountDelta);
+        point.getValue(FIELD_STEPS).setInt(stepCountDelta);
         dataSet.add(point);
 
         Status status = Fitness.HistoryApi.insertData(mApiClient, dataSet).await(1, TimeUnit.MINUTES);
@@ -728,7 +810,7 @@ View.OnClickListener{
 
         DataPoint point = dataSet.createDataPoint()
                 .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS);
-        point.getValue(Field.FIELD_STEPS).setInt(stepCountDelta);
+        point.getValue(FIELD_STEPS).setInt(stepCountDelta);
         dataSet.add(point);
 
         DataUpdateRequest updateRequest = new DataUpdateRequest.Builder().setDataSet(dataSet).setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS).build();
@@ -757,17 +839,18 @@ View.OnClickListener{
         protected Long doInBackground(Object... params) {
             long total = 0;
             PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
-            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            DailyTotalResult totalResult = result.await(30, SECONDS);
             if (totalResult.getStatus().isSuccess()) {
                 DataSet totalSet = totalResult.getTotal();
                 if (totalSet != null) {
                     total = totalSet.isEmpty()
                             ? 0
-                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
+                            : totalSet.getDataPoints().get(0).getValue(FIELD_STEPS).asInt();
                 }
             } else {
                 Log.w(TAG, "There was a problem getting the step count.");
             }
+
             return total;
         }
 
@@ -779,6 +862,31 @@ View.OnClickListener{
             //Total steps covered for that day
             Log.i(TAG, "Total steps: " + aLong);
 
+
+            String adam = aLong.toString();
+            int adamVal = Integer.parseInt(adam);
+            PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+
+            mPieChart.addPieSlice(new PieModel("Steps Today", adamVal,Color.parseColor("#FE6DA8")));
+            //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+
+            mPieChart.startAnimation();
+
+            TextView textView = (TextView) findViewById(R.id.textView01);
+            textView.setText(adam);
+
+//            BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+//
+//            mBarChart.addBar(new BarModel(adamVal, 0xFF123456));
+//            mBarChart.addBar(new BarModel(5000,  0xFF343456));
+//            mBarChart.addBar(new BarModel(2000, 0xFF563456));
+//            mBarChart.addBar(new BarModel(100, 0xFF873F56));
+//            mBarChart.addBar(new BarModel(5000, 0xFF56B7F1));
+//            mBarChart.addBar(new BarModel(2.f,  0xFF343456));
+//            mBarChart.addBar(new BarModel(0.4f, 0xFF1FF4AC));
+//            mBarChart.addBar(new BarModel(4.f,  0xFF1BA4E6));
+//
+//            mBarChart.startAnimation();
 //            runOnUiThread(new Runnable() {
 //                @Override
 //                public void run() {
@@ -818,34 +926,43 @@ View.OnClickListener{
 //        }
 //    }
 
-//    private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
-//        protected Long doInBackground(Object... params) {
-//            long total = 0;
-//            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType. TYPE_CALORIES_EXPENDED);
-//            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
-//            if (totalResult.getStatus().isSuccess()) {
-//                DataSet totalSet = totalResult.getTotal();
-//                if (totalSet != null) {
-//                    total = totalSet.isEmpty()
-//                            ? 0
-//                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_CALORIES).asInt();
-//                }
-//            } else {
-//                Log.w(TAG, "There was a problem getting the calories.");
-//            }
-//            return total;
-//        }
+    private class FetchCalorieAsync extends AsyncTask<Object, Object, Long> {
+        protected Long doInBackground(Object... params) {
+            long total = 0;
+            PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType. TYPE_CALORIES_EXPENDED);
+            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            if (totalResult.getStatus().isSuccess()) {
+                DataSet totalSet = totalResult.getTotal();
+                if (totalSet != null) {
+                    total = totalSet.isEmpty()
+                            ? 0
+                            : totalSet.getDataPoints().get(0).getValue(Field.FIELD_CALORIES).asInt();
+                }
+            } else {
+                Log.w(TAG, "There was a problem getting the calories.");
+            }
+            return total;
+        }
+
+
+        @Override
+        protected void onPostExecute(Long aLong) {
+            super.onPostExecute(aLong);
+
+//            String adam = aLong.toString();
+//            int adamVal = Integer.parseInt(adam);
+//            PieChart mPieChart = (PieChart) findViewById(R.id.piechart1);
 //
+//            mPieChart.addPieSlice(new PieModel("Calories", adamVal,Color.parseColor("#FE6DA8")));
+//            //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
 //
-//        @Override
-//        protected void onPostExecute(Long aLong) {
-//            super.onPostExecute(aLong);
-//
-//            //Total calories burned for that day
-//            Log.i(TAG, "Total calories: " + aLong);
-//
-//        }
-//    }
+//            mPieChart.startAnimation();
+
+            //Total calories burned for that day
+            Log.i(TAG, "Total calories: " + aLong);
+
+        }
+    }
 
     public void subscribe() {
         // To create a subscription, invoke the Recording API. As soon as the subscription is
@@ -875,12 +992,12 @@ View.OnClickListener{
             long total = 0;
 
             PendingResult<DailyTotalResult> result = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
-            DailyTotalResult totalResult = result.await(30, TimeUnit.SECONDS);
+            DailyTotalResult totalResult = result.await(30, SECONDS);
             if (totalResult.getStatus().isSuccess()) {
                 DataSet totalSet = totalResult.getTotal();
                 total = totalSet.isEmpty()
                         ? 0
-                        : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
+                        : totalSet.getDataPoints().get(0).getValue(FIELD_STEPS).asInt();
             } else {
                 Log.w(TAG, "There was a problem getting the step count.");
             }
