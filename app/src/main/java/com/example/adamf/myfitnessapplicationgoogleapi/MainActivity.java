@@ -100,6 +100,13 @@ View.OnClickListener{
     String TAG = "YOUR-TAG-NAME";
 
 
+    private int monday = 0;
+    private int tuesday = 0;
+    private int wednesday = 0;
+    private int thursday = 0;
+    private int friday = 0;
+    private int saturday = 0;
+    private int sunday = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -332,18 +339,18 @@ View.OnClickListener{
 
         //Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
 
-        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
-
-        mBarChart.addBar(new BarModel(600, 0xFF123456));
-        mBarChart.addBar(new BarModel(2.f,  0xFF343456));
-        mBarChart.addBar(new BarModel(3.3f, 0xFF563456));
-        mBarChart.addBar(new BarModel(1.1f, 0xFF873F56));
-        mBarChart.addBar(new BarModel(2.7f, 0xFF56B7F1));
-        mBarChart.addBar(new BarModel(2.f,  0xFF343456));
-        mBarChart.addBar(new BarModel(0.4f, 0xFF1FF4AC));
-        mBarChart.addBar(new BarModel(4.f,  0xFF1BA4E6));
-
-        mBarChart.startAnimation();
+//lol
+//        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+//
+//        mBarChart.addBar(new BarModel(monday, 0xFF123456));
+//        mBarChart.addBar(new BarModel(tuesday,  0xFF343456));
+//        mBarChart.addBar(new BarModel(wednesday, 0xFF563456));
+//        mBarChart.addBar(new BarModel(thursday, 0xFF873F56));
+//        mBarChart.addBar(new BarModel(friday, 0xFF56B7F1));
+//        mBarChart.addBar(new BarModel(saturday,  0xFF343456));
+//        mBarChart.addBar(new BarModel(sunday, 0xFF1FF4AC));
+//
+//        mBarChart.startAnimation();
 
         ResultCallback<DataSourcesResult> dataSourcesResultCallback = new ResultCallback<DataSourcesResult>() {
             @Override
@@ -708,9 +715,23 @@ View.OnClickListener{
 
                 final DataPoint adamDp = dp;
                 final Field adamField = field;
+                //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+//                String adam = adamDp.getValue(adamField).toString();
+//                final int adamflood = Integer.parseInt(adam);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
+//                        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+//
+//                        mBarChart.addBar(new BarModel(adamflood, 0xFF123456));
+//                        mBarChart.addBar(new BarModel(adamflood,  0xFF343456));
+//                        mBarChart.addBar(new BarModel(wednesday, 0xFF563456));
+//                        mBarChart.addBar(new BarModel(thursday, 0xFF873F56));
+//                        mBarChart.addBar(new BarModel(friday, 0xFF56B7F1));
+//                        mBarChart.addBar(new BarModel(saturday,  0xFF343456));
+//                        mBarChart.addBar(new BarModel(sunday, 0xFF1FF4AC));
+//
+//                        mBarChart.startAnimation();
                         Toast.makeText(getApplicationContext(), "History for: " + adamField.getName() + "\t\tStart: " + dateFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + "\t\tEnd: " + dateFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + "\tValue: " + adamDp.getValue(adamField), Toast.LENGTH_SHORT).show();
                     }
                 });
