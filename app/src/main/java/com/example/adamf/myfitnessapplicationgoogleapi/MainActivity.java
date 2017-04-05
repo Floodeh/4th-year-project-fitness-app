@@ -74,6 +74,7 @@ GoogleApiClient.OnConnectionFailedListener,
 View.OnClickListener{
 
     private Button mButtonViewWeek;
+    private Button mButtonViewWeekStepsGraph;
     private Button mButtonViewWeekCalorie;
     private Button mButtonViewWeekTime;
     private Button mButtonViewToday;
@@ -135,6 +136,7 @@ View.OnClickListener{
                 //.enableAutoManage(this, 0, this)
                 .build();
 
+
         initViews();
     }
 
@@ -146,6 +148,7 @@ View.OnClickListener{
         mCancelSubscriptionsBtn = (Button) findViewById(R.id.btn_cancel_subscriptions);
         mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
         mButtonViewWeek = (Button) findViewById(R.id.btn_view_week);
+        mButtonViewWeekStepsGraph = (Button) findViewById(R.id.btn_view_week_steps_graph);
         mButtonViewWeekCalorie = (Button) findViewById(R.id.btn_view_week_calorie);
         mButtonViewWeekTime = (Button) findViewById(R.id.btn_view_week_time);
         mButtonViewToday = (Button) findViewById(R.id.btn_view_today);
@@ -158,6 +161,7 @@ View.OnClickListener{
 
 
         mButtonViewWeek.setOnClickListener(this);
+        mButtonViewWeekStepsGraph.setOnClickListener(this);
         mButtonViewWeekCalorie.setOnClickListener(this);
         mButtonViewWeekTime.setOnClickListener(this);
         mButtonViewToday.setOnClickListener(this);
@@ -210,6 +214,8 @@ View.OnClickListener{
 //
 //        mCubicValueLineChart.addSeries(series);
 //        mCubicValueLineChart.startAnimation();
+
+
     }
 
     private void initCallbacks() {
@@ -395,6 +401,10 @@ View.OnClickListener{
                 new ViewWeekStepCountTask().execute();
                 break;
             }
+            case R.id.btn_view_week_steps_graph: {
+                new ViewWeekStepCountGraphTask().execute();
+                break;
+            }
             case R.id.btn_view_today: {
                 new ViewTodaysStepCountTask().execute();
                 break;
@@ -509,6 +519,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewWeekStepCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            weekStepsGraph();
+            return null;
+        }
+    }
+
     private class ViewWeekCalorieCountTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             displayLastWeeksCaloriesData();
@@ -578,6 +595,490 @@ View.OnClickListener{
 
     private void weekStepsGraph()
     {
+        stepsYesterday();
+        stepsSecondDay();
+        stepsThirdDay();
+        stepsFourthDay();
+        stepsFifthDay();
+        stepsSixthDay();
+        stepsSeventhDay();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+
+
+                mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
+                mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
+                mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
+                mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
+                mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
+                mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
+                mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
+
+                mBarChart.startAnimation();
+            }
+        });
+    }
+
+    private void stepsSeventhDay() {
+        //1 week ago
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DATE, -7);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        seventhDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded 7 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR SEVEN DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                seventhDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Seventh day: " + seventhDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+        seventhDay = seventhDay - sixthDay - fifthDay - fourthDay - thirdDay - secondDay - yesterDay;
+
+    }
+
+    private void stepsYesterday() {
+        //YESTERDAY
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -1);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        yesterDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded yesterday
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR YESTERDAY
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                yesterDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Yesterday: " + yesterDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+    }
+
+    private void stepsSecondDay() {
+        //2 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -2);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        secondDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded 2 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 2 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                secondDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Second Day: " + secondDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        secondDay = secondDay - yesterDay;
+
+    }
+
+    private void stepsThirdDay() {
+        //3 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -3);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        thirdDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded 3 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 3 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                thirdDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Third Day: " + thirdDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        thirdDay = thirdDay - secondDay - yesterDay;
+
+    }
+
+    private void stepsFourthDay() {
+        //4 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -4);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        fourthDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded 4 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 4 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                fourthDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Fourth Day: " + fourthDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        fourthDay = fourthDay - thirdDay - secondDay - yesterDay;
+
+    }
+
+    private void stepsFifthDay() {
+        //5 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -5);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        fifthDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded 5 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 5 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                fifthDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Fifth Day: " + fifthDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        fifthDay = fifthDay - fourthDay - thirdDay - secondDay - yesterDay;
+
+    }
+
+    private void stepsSixthDay() {
+        //6 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -6);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        sixthDay = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded 6 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 6 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                sixthDay += dp.getValue(field).asInt();
+                                Log.d(TAG, "Sixth Day: " + sixthDay);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        sixthDay = sixthDay - fifthDay - fourthDay - thirdDay - secondDay - yesterDay;
 
     }
 
@@ -610,6 +1111,7 @@ View.OnClickListener{
                 .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
                 .bucketByTime(1, TimeUnit.DAYS)
                 .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
                 .build();
 
         DataReadResult dataReadResult = Fitness.HistoryApi.readData(mApiClient, readRequest).await(1, TimeUnit.MINUTES);
@@ -785,17 +1287,17 @@ View.OnClickListener{
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
-
-                        mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
-                        mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
-                        mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
-                        mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
-                        mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
-                        mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
-                        mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
-
-                        mBarChart.startAnimation();
+//                        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+//
+//                        mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
+//                        mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
+//                        mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
+//                        mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
+//                        mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
+//                        mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
+//                        mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
+//
+//                        mBarChart.startAnimation();
                         Toast.makeText(getApplicationContext(), "History for: " + adamField.getName() + "\t\tStart: " + dateFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + "\t\tEnd: " + dateFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + "\tValue: " + adamDp.getValue(adamField), Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -959,6 +1461,8 @@ View.OnClickListener{
 
             TextView textView = (TextView) findViewById(R.id.textView01);
             textView.setText(adam);
+
+
 
 //            BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
 //
