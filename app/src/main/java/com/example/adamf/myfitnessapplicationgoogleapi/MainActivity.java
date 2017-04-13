@@ -1,5 +1,9 @@
 package com.example.adamf.myfitnessapplicationgoogleapi;
 
+import android.Manifest;
+import android.app.IntentService;
+import android.app.PendingIntent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.content.Intent;
@@ -7,6 +11,10 @@ import android.content.IntentSender;
 import android.nfc.Tag;
 import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.app.NotificationCompat;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -27,6 +35,9 @@ import com.google.android.gms.fitness.request.DataDeleteRequest;
 import com.google.android.gms.fitness.request.DataUpdateRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.ListSubscriptionsResult;
+import com.google.android.gms.location.ActivityRecognition;
+import com.google.android.gms.location.ActivityRecognitionResult;
+import com.google.android.gms.location.DetectedActivity;
 import com.microsoft.windowsazure.mobileservices.*;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
@@ -73,6 +84,7 @@ GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener,
 View.OnClickListener{
 
+    private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
     private Button mButtonViewWeek;
     private Button mButtonViewWeekStepsGraph;
     private Button mButtonViewWeekCalorie;
@@ -121,13 +133,13 @@ View.OnClickListener{
         //initViews();
         initCallbacks();
 
-
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Fitness.SENSORS_API)
                 .addApi(Fitness.HISTORY_API)
                 .addApi(Fitness.RECORDING_API)
                 .addApi(Fitness.GOALS_API)
                 .addApi(Fitness.SESSIONS_API)
+                .addApi(ActivityRecognition.API)
                 .addScope(new Scope(Scopes.FITNESS_ACTIVITY_READ_WRITE))
                 .addScope(new Scope(Scopes.FITNESS_LOCATION_READ_WRITE))
                 .addScope(new Scope(Scopes.FITNESS_BODY_READ_WRITE))
@@ -136,9 +148,122 @@ View.OnClickListener{
                 //.enableAutoManage(this, 0, this)
                 .build();
 
+        int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
+        //int permissionCheck2 = ContextCompat.checkSelfPermission(this, Manifest.permission.AC)
+
+        ActivityCompat.requestPermissions(this,
+                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+
+            // Should we show an explanation?
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+
+            } else {
+
+                // No explanation needed, we can request the permission.
+
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                        MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
+
+                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
+                // app-defined int constant. The callback method gets the
+                // result of the request.
+            }
+        }
+
+        if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
+            //Execute location service call if user has explicitly granted ACCESS_FINE_LOCATION..
+            Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
+                    .setResultCallback(mSubscribeResultCallback);
+        }
 
         initViews();
     }
+
+    public static class ActivityRecognizedService extends IntentService {
+
+        public ActivityRecognizedService() {
+            super("ActivityRecognizedService");
+        }
+
+        public ActivityRecognizedService(String name) {
+            super(name);
+        }
+
+        @Override
+        protected void onHandleIntent(Intent intent)
+        {
+            if(ActivityRecognitionResult.hasResult(intent)) {
+                ActivityRecognitionResult result = ActivityRecognitionResult.extractResult(intent);
+                handleDetectedActivities( result.getProbableActivities() );
+            }
+        }
+        private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
+            for( DetectedActivity activity : probableActivities ) {
+                switch( activity.getType() ) {
+                    case DetectedActivity.IN_VEHICLE: {
+                        Log.e( "ActivityRecognition", "In Vehicle: " + activity.getConfidence() );
+                        break;
+                    }
+                    case DetectedActivity.ON_BICYCLE: {
+                        Log.e( "ActivityRecognition", "On Bicycle: " + activity.getConfidence() );
+                        break;
+                    }
+                    case DetectedActivity.ON_FOOT: {
+                        Log.e( "ActivityRecognition", "On Foot: " + activity.getConfidence() );
+                        break;
+                    }
+                    case DetectedActivity.RUNNING: {
+                        Log.e( "ActivityRecognition", "Running: " + activity.getConfidence() );
+                        break;
+                    }
+                    case DetectedActivity.STILL: {
+                        Log.e( "ActivityRecognition", "Still: " + activity.getConfidence() );
+                        if( activity.getConfidence() >= 75 ) {
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                            builder.setContentText( "Are you standing still?" );
+                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setContentTitle( getString( R.string.app_name ) );
+                            NotificationManagerCompat.from(this).notify(0, builder.build());
+                        }
+                        break;
+                    }
+                    case DetectedActivity.TILTING: {
+                        Log.e( "ActivityRecognition", "Tilting: " + activity.getConfidence() );
+                        break;
+                    }
+                    case DetectedActivity.WALKING: {
+                        Log.e( "ActivityRecognition", "Walking: " + activity.getConfidence() );
+                        if( activity.getConfidence() >= 75 ) {
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                            builder.setContentText( "Are you walking?" );
+                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setContentTitle( getString( R.string.app_name ) );
+                            NotificationManagerCompat.from(this).notify(0, builder.build());
+                        }
+                        break;
+                    }
+                    case DetectedActivity.UNKNOWN: {
+                        Log.e( "ActivityRecogition", "Unknown: " + activity.getConfidence() );
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+
 
     private void initViews() {
 
@@ -307,7 +432,12 @@ View.OnClickListener{
 
     @Override
     public void onConnected(Bundle bundle) {
-        DataSourcesRequest dataSourceRequest = new DataSourcesRequest.Builder()
+
+        Intent intent = new Intent( this, ActivityRecognizedService.class );
+        PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
+        ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 3000, pendingIntent );
+
+    DataSourcesRequest dataSourceRequest = new DataSourcesRequest.Builder()
                 .setDataTypes(DataType.TYPE_STEP_COUNT_CUMULATIVE)
                 .setDataSourceTypes(DataSource.TYPE_RAW)
                 .build();
@@ -328,8 +458,8 @@ View.OnClickListener{
 
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_STEP_COUNT_DELTA)
                 .setResultCallback(mSubscribeResultCallback);
-        //Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
-        //      .setResultCallback(mSubscribeResultCallback);
+//        Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
+//              .setResultCallback(mSubscribeResultCallback);
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT)
                 .setResultCallback(mSubscribeResultCallback);
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_ACTIVITY_SAMPLES)
@@ -425,10 +555,10 @@ View.OnClickListener{
                 new ViewWeekCalorieCountTask().execute();
                 break;
             }
-//            case R.id.btn_view_today_distance: {
-//                new ViewTodaysDistanceCountTask().execute();
-//                break;
-//            }
+            case R.id.btn_view_today_distance: {
+                new ViewTodaysDistanceCountTask().execute();
+                break;
+            }
 //            case R.id.btn_add_steps: {
 //                new AddStepsToGoogleFitTask().execute();
 //                break;
@@ -561,12 +691,12 @@ View.OnClickListener{
         }
     }
 
-//    private class ViewTodaysDistanceCountTask extends AsyncTask<Void, Void, Void> {
-//        protected Void doInBackground(Void... params) {
-//            displayDistanceDataForToday();
-//            return null;
-//        }
-//    }
+    private class ViewTodaysDistanceCountTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            displayDistanceDataForToday();
+            return null;
+        }
+    }
 
 //    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
 //        protected Void doInBackground(Void... params) {
@@ -605,18 +735,36 @@ View.OnClickListener{
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+//                BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+//
+//
+//                mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
+//                mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
+//                mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
+//                mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
+//                mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
+//                mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
+//                mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
+//
+//                mBarChart.startAnimation();
 
+                ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart);
 
-                mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
-                mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
-                mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
-                mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
-                mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
-                mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
-                mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
+                ValueLineSeries series = new ValueLineSeries();
+                series.setColor(0xFF56B7F1);
 
-                mBarChart.startAnimation();
+                series.addPoint(new ValueLinePoint("", 0));
+                series.addPoint(new ValueLinePoint("Day 7", seventhDay));
+                series.addPoint(new ValueLinePoint("Day 6", sixthDay));
+                series.addPoint(new ValueLinePoint("Day 5", fifthDay));
+                series.addPoint(new ValueLinePoint("Day 4", fourthDay));
+                series.addPoint(new ValueLinePoint("Day 3", thirdDay));
+                series.addPoint(new ValueLinePoint("Day 2", secondDay));
+                series.addPoint(new ValueLinePoint("Day 1", yesterDay));
+                series.addPoint(new ValueLinePoint("", 0));
+
+                mCubicValueLineChart.addSeries(series);
+                mCubicValueLineChart.startAnimation();
             }
         });
     }
@@ -1236,6 +1384,7 @@ View.OnClickListener{
         Log.e("History", "Range Start: " + dateFormat.format(startTime));
         Log.e("History", "Range End: " + dateFormat.format(endTime));
 
+
         //Check how much time was spent active in the last 7 days
         DataReadRequest readRequest = new DataReadRequest.Builder()
                 .aggregate(DataType.TYPE_ACTIVITY_SEGMENT, DataType.AGGREGATE_ACTIVITY_SUMMARY)
@@ -1338,10 +1487,58 @@ View.OnClickListener{
         showDataSet(result.getTotal());
     }
 
-//    private void displayDistanceDataForToday() {
-//        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
-//        showDataSet(result.getTotal());
-//    }
+    private void displayDistanceDataForToday() {
+        DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+        showDataSet(result.getTotal());
+    }
+
+
+    private DataSet createDataForRequest(DataType dataType, int dataSourceType, Object values,
+                                         long startTime, long endTime, TimeUnit timeUnit) {
+        DataSource dataSource = new DataSource.Builder()
+                .setAppPackageName(this)
+                .setDataType(dataType)
+                .setType(dataSourceType)
+                .build();
+
+        DataSet dataSet = DataSet.create(dataSource);
+        DataPoint dataPoint = dataSet.createDataPoint().setTimeInterval(startTime, endTime, timeUnit);
+
+        if (values instanceof Integer) {
+            dataPoint = dataPoint.setIntValues((Integer)values);
+        } else {
+            dataPoint = dataPoint.setFloatValues((Float)values);
+        }
+
+        dataSet.add(dataPoint);
+
+        return dataSet;
+    }
+
+    private void addWeightDataToGoogleFit() {
+        //Adds weight spread out evenly from start time to end time
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.HOUR_OF_DAY, -1);
+        long startTime = cal.getTimeInMillis();
+
+        float weight = 81;
+        DataSet weightDataSet = createDataForRequest(
+                DataType.TYPE_WEIGHT,    // for height, it would be DataType.TYPE_HEIGHT
+                DataSource.TYPE_RAW,
+                weight,                  // weight in kgs
+                startTime,              // start time
+                endTime,                // end time
+                TimeUnit.MILLISECONDS                // Time Unit, for example, TimeUnit.MILLISECONDS
+        );
+
+        com.google.android.gms.common.api.Status weightInsertStatus =
+                Fitness.HistoryApi.insertData(mApiClient, weightDataSet)
+                        .await(1, TimeUnit.MINUTES);
+
+    }
 
     private void addStepDataToGoogleFit() {
         //Adds steps spread out evenly from start time to end time

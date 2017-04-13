@@ -115,27 +115,27 @@
         app:egValueTextSize="36sp"/>
 
 
-    <org.eazegraph.lib.charts.BarChart
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        android:id="@+id/barchart"
-        android:layout_width="match_parent"
-        android:layout_height="256dp"
-        android:padding="10dp"
-        app:egFixedBarWidth="true"
-        app:egBarWidth="20dp"
-        app:egLegendHeight="40dp"/>
-
-    <!--<org.eazegraph.lib.charts.ValueLineChart-->
+    <!--<org.eazegraph.lib.charts.BarChart-->
         <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
-        <!--android:id="@+id/cubiclinechart"-->
+        <!--android:id="@+id/barchart"-->
         <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="200dp"-->
-        <!--app:egUseCubic="true"-->
-        <!--app:egUseOverlapFill="true"-->
-        <!--app:egCurveSmoothness="0.4"-->
-        <!--app:egIndicatorLineColor="#FE6DA8"-->
-        <!--app:egLegendHeight="40dp"-->
-        <!--app:egShowStandardValue="true"/>-->
+        <!--android:layout_height="256dp"-->
+        <!--android:padding="10dp"-->
+        <!--app:egFixedBarWidth="true"-->
+        <!--app:egBarWidth="20dp"-->
+        <!--app:egLegendHeight="40dp"/>-->
+
+    <org.eazegraph.lib.charts.ValueLineChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/cubiclinechart"
+        android:layout_width="match_parent"
+        android:layout_height="200dp"
+        app:egUseCubic="true"
+        app:egUseOverlapFill="true"
+        app:egCurveSmoothness="0.4"
+        app:egIndicatorLineColor="#FE6DA8"
+        app:egLegendHeight="40dp"
+        app:egShowStandardValue="true"/>
 
 </LinearLayout>
 </ScrollView>
