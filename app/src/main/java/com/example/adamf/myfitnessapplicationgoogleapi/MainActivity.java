@@ -30,11 +30,16 @@ import java.util.concurrent.TimeUnit;
 
 
 import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.fitness.data.Session;
 import com.google.android.gms.fitness.data.Subscription;
 import com.google.android.gms.fitness.request.DataDeleteRequest;
 import com.google.android.gms.fitness.request.DataUpdateRequest;
+import com.google.android.gms.fitness.request.SessionInsertRequest;
+import com.google.android.gms.fitness.request.SessionReadRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
 import com.google.android.gms.fitness.result.ListSubscriptionsResult;
+import com.google.android.gms.fitness.result.SessionReadResult;
+import com.google.android.gms.fitness.result.SessionStopResult;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
@@ -98,6 +103,10 @@ View.OnClickListener{
     private Button mButtonDeleteSteps;
     private Button mCancelSubscriptionsBtn;
     private Button mShowSubscriptionsBtn;
+    private Button mStartSessionBtn;
+    private Button mStopSessionBtn;
+    private Button mInsertSegmentBtn;
+    private Button mReadSessionBtn;
 
 
 
@@ -111,6 +120,7 @@ View.OnClickListener{
     private boolean authInProgress = false;
     private GoogleApiClient mApiClient;
     String TAG = "YOUR-TAG-NAME";
+    private static final String KEY_ = "AIzaSyBo-K-NkIn7edBi1DZckt4Xmb4qkfPJrRw";
 
 
     private int seventhDay = 0;
@@ -120,6 +130,9 @@ View.OnClickListener{
     private int thirdDay = 0;
     private int secondDay = 0;
     private int yesterDay = 0;
+
+    private final String SESSION_NAME = "session name";
+    private Session mSession;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -214,10 +227,24 @@ View.OnClickListener{
                 switch( activity.getType() ) {
                     case DetectedActivity.IN_VEHICLE: {
                         Log.e( "ActivityRecognition", "In Vehicle: " + activity.getConfidence() );
+                        if( activity.getConfidence() >= 75 ) {
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                            builder.setContentText( "Are you Driving?" );
+                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setContentTitle( getString( R.string.app_name ) );
+                            NotificationManagerCompat.from(this).notify(0, builder.build());
+                        }
                         break;
                     }
                     case DetectedActivity.ON_BICYCLE: {
                         Log.e( "ActivityRecognition", "On Bicycle: " + activity.getConfidence() );
+                        if( activity.getConfidence() >= 75 ) {
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                            builder.setContentText( "Are you Cycling?" );
+                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setContentTitle( getString( R.string.app_name ) );
+                            NotificationManagerCompat.from(this).notify(0, builder.build());
+                        }
                         break;
                     }
                     case DetectedActivity.ON_FOOT: {
@@ -226,6 +253,13 @@ View.OnClickListener{
                     }
                     case DetectedActivity.RUNNING: {
                         Log.e( "ActivityRecognition", "Running: " + activity.getConfidence() );
+                        if( activity.getConfidence() >= 75 ) {
+                            NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+                            builder.setContentText( "Are you Running?" );
+                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setContentTitle( getString( R.string.app_name ) );
+                            NotificationManagerCompat.from(this).notify(0, builder.build());
+                        }
                         break;
                     }
                     case DetectedActivity.STILL: {
@@ -264,6 +298,211 @@ View.OnClickListener{
     }
 
 
+    public void startSession() {
+        mSession = new Session.Builder()
+                .setName("NewSessionTest")
+                .setIdentifier(getString(R.string.app_name) + " " + System.currentTimeMillis())
+                .setDescription("Running Session Description")
+                .setStartTime(Calendar.getInstance().getTimeInMillis(), TimeUnit.MILLISECONDS)
+                .setActivity(FitnessActivities.WALKING)
+                .build();
+
+        PendingResult<Status> pendingResult =
+                Fitness.SessionsApi.startSession(mApiClient, mSession);
+
+        pendingResult.setResultCallback(
+                new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.isSuccess()) {
+                            Log.i("App: ", "Successfully started session");
+                        } else {
+                            Log.i("App: +", "Failed to start session: " + status.getStatusMessage());
+                        }
+                    }
+                }
+        );
+    }
+
+    public void stopSession() {
+
+        PendingResult<SessionStopResult> pendingResult =
+                Fitness.SessionsApi.stopSession(mApiClient, mSession.getIdentifier());
+
+
+        pendingResult.setResultCallback(new ResultCallback<SessionStopResult>() {
+            @Override
+            public void onResult(SessionStopResult sessionStopResult) {
+                if( sessionStopResult.getStatus().isSuccess() ) {
+                    Log.i("App", "Successfully stopped session");
+                    if( sessionStopResult.getSessions() != null && !sessionStopResult.getSessions().isEmpty() ) {
+                        Log.i("App:", "Session name: " + sessionStopResult.getSessions().get(0).getName());
+                        Log.i("App:", "Session start: " + sessionStopResult.getSessions().get(0).getStartTime(TimeUnit.MILLISECONDS));
+                        Log.i("App:", "Session end: " + sessionStopResult.getSessions().get(0).getEndTime(TimeUnit.MILLISECONDS));
+                    }
+                } else {
+                    Log.i("App:", "Failed to stop session: " + sessionStopResult.getStatus().getStatusMessage());
+                }
+            }
+
+        });
+    }
+
+    public void insertSegment() {
+        if( !mApiClient.isConnected() ) {
+            Toast.makeText(this, "Not connected to Google", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Calendar calendar = Calendar.getInstance();
+        Date now = new Date();
+        calendar.setTime(now);
+
+        long endTime = calendar.getTimeInMillis();
+        calendar.add(Calendar.MINUTE, -15);
+        long walkEndTime = calendar.getTimeInMillis();
+        calendar.add(Calendar.MINUTE, -5);
+        long walkStartTime = calendar.getTimeInMillis();
+        calendar.add(Calendar.MINUTE, -15);
+        long startTime = calendar.getTimeInMillis();
+
+        float firstRunSpeed = 15;
+        float walkSpeed = 5;
+        float secondRunSpeed = 13;
+
+        DataSource speedSegmentDataSource = new DataSource.Builder()
+                .setAppPackageName(this.getPackageName())
+                .setDataType(DataType.TYPE_SPEED)
+                .setName("App speed dataset")
+                .setType(DataSource.TYPE_RAW)
+                .build();
+
+        DataSource activitySegmentDataSource = new DataSource.Builder()
+                .setAppPackageName(this.getPackageName())
+                .setDataType(DataType.TYPE_ACTIVITY_SEGMENT)
+                .setName("App activity segments dataset")
+                .setType(DataSource.TYPE_RAW)
+                .build();
+
+        DataSet speedDataSet = DataSet.create(speedSegmentDataSource);
+        DataSet activityDataSet = DataSet.create(activitySegmentDataSource);
+
+        //Create speed data point for first run segment
+        DataPoint firstRunSpeedDataPoint = speedDataSet.createDataPoint()
+                .setTimeInterval(startTime, walkStartTime, TimeUnit.MILLISECONDS);
+        firstRunSpeedDataPoint.getValue(Field.FIELD_SPEED).setFloat(firstRunSpeed);
+        speedDataSet.add(firstRunSpeedDataPoint);
+
+        //Create speed data point for walking segment
+        DataPoint walkingSpeedDataPoint = speedDataSet.createDataPoint()
+                .setTimeInterval(walkStartTime, walkEndTime, TimeUnit.MILLISECONDS);
+        walkingSpeedDataPoint.getValue(Field.FIELD_SPEED).setFloat(walkSpeed);
+        speedDataSet.add(walkingSpeedDataPoint);
+
+        //Create speed data point for second run segment
+        DataPoint secondRunSpeedDataPoint = speedDataSet.createDataPoint()
+                .setTimeInterval(walkEndTime, endTime, TimeUnit.MILLISECONDS);
+        secondRunSpeedDataPoint.getValue(Field.FIELD_SPEED).setFloat(secondRunSpeed);
+        speedDataSet.add(secondRunSpeedDataPoint);
+
+        //Create activity data point for first run segment
+        DataPoint firstRunActivityDataPoint = activityDataSet.createDataPoint()
+                .setTimeInterval(startTime, walkStartTime, TimeUnit.MILLISECONDS);
+        firstRunActivityDataPoint.getValue(Field.FIELD_ACTIVITY).setActivity(FitnessActivities.RUNNING);
+        activityDataSet.add(firstRunActivityDataPoint);
+
+        //Create activity data point for walking segment
+        DataPoint walkingActivityDataPoint = activityDataSet.createDataPoint()
+                .setTimeInterval(walkStartTime, walkEndTime, TimeUnit.MILLISECONDS);
+        walkingActivityDataPoint.getValue(Field.FIELD_ACTIVITY).setActivity(FitnessActivities.WALKING);
+        activityDataSet.add(walkingActivityDataPoint);
+
+        //Create activity data point for second run segment
+        DataPoint secondRunActivityDataPoint = activityDataSet.createDataPoint()
+                .setTimeInterval(walkEndTime, endTime, TimeUnit.MILLISECONDS);
+        secondRunActivityDataPoint.getValue(Field.FIELD_ACTIVITY).setActivity(FitnessActivities.RUNNING);
+        activityDataSet.add(secondRunActivityDataPoint);
+
+        Session session = new Session.Builder()
+                .setName(SESSION_NAME)
+                .setIdentifier(getString(R.string.app_name) + " " + System.currentTimeMillis())
+                .setDescription("Running in Segments")
+                .setStartTime(startTime, TimeUnit.MILLISECONDS)
+                .setEndTime(endTime, TimeUnit.MILLISECONDS)
+                .setActivity(FitnessActivities.RUNNING)
+                .build();
+
+        SessionInsertRequest insertRequest = new SessionInsertRequest.Builder()
+                .setSession(session)
+                .addDataSet(speedDataSet)
+                .addDataSet(activityDataSet)
+                .build();
+
+        PendingResult<Status> pendingResult =
+                Fitness.SessionsApi.insertSession(mApiClient, insertRequest);
+
+        pendingResult.setResultCallback(new ResultCallback<Status>() {
+            @Override
+            public void onResult(Status status) {
+                if( status.isSuccess() ) {
+                    Log.i("Tuts+", "successfully inserted running session");
+                } else {
+                    Log.i("Tuts+", "Failed to insert running session: " + status.getStatusMessage());
+                }
+            }
+        });
+
+    }
+
+    public void readSession() {
+        if( !mApiClient.isConnected() ) {
+            Toast.makeText(this, "Not connected to Google", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.MONTH, -1);
+        long startTime = cal.getTimeInMillis();
+
+        SessionReadRequest readRequest = new SessionReadRequest.Builder()
+                .setTimeInterval(startTime, endTime, TimeUnit.MILLISECONDS)
+                .read(DataType.TYPE_SPEED)
+                //.read(DataType.TYPE_STEP_COUNT_DELTA)
+                //.read(DataType.TYPE_CALORIES_EXPENDED)
+                //.read(DataType.TYPE_ACTIVITY_SAMPLES)
+                //.read(DataType.TYPE_DISTANCE_DELTA)
+                .setSessionName(SESSION_NAME)
+                .build();
+
+        PendingResult<SessionReadResult> sessionReadResult =
+                Fitness.SessionsApi.readSession(mApiClient, readRequest);
+
+        sessionReadResult.setResultCallback(new ResultCallback<SessionReadResult>() {
+            @Override
+            public void onResult(SessionReadResult sessionReadResult) {
+                if (sessionReadResult.getStatus().isSuccess()) {
+                    Log.i("App:", "Successfully read session data");
+                    for (Session session : sessionReadResult.getSessions()) {
+                        Log.i("App:", "Session name: " + session.getName());
+                        for (DataSet dataSet : sessionReadResult.getDataSet(session)) {
+                            for (DataPoint dataPoint : dataSet.getDataPoints()) {
+                                Log.i("App:", "Speed: " + dataPoint.getValue(Field.FIELD_SPEED));
+                                //Log.i("App:", "Steps: " + dataPoint.getValue(Field.FIELD_STEPS));
+                                //Log.i("App:", "Distance: " + dataPoint.getValue(Field.FIELD_DISTANCE));
+                                //Log.i("App:", "Calories: " + dataPoint.getValue(Field.FIELD_CALORIES));
+                                //Log.i("App:", "Time: " + dataPoint.getValue(Field.FIELD_DURATION));
+                            }
+                        }
+                    }
+                } else {
+                    Log.i("App:", "Failed to read session data");
+                }
+            }
+        });
+    }
 
     private void initViews() {
 
@@ -283,6 +522,11 @@ View.OnClickListener{
 //        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
 //        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
         mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
+        mStartSessionBtn = (Button) findViewById(R.id.btn_start_session);
+        mStopSessionBtn = (Button) findViewById(R.id.btn_stop_session);
+        mInsertSegmentBtn = (Button) findViewById(R.id.btn_insert_segment);
+        mReadSessionBtn = (Button) findViewById(R.id.btn_read_session);
+
 
 
         mButtonViewWeek.setOnClickListener(this);
@@ -298,6 +542,10 @@ View.OnClickListener{
         mButtonDeleteSteps.setOnClickListener(this);
         mCancelSubscriptionsBtn.setOnClickListener(this);
         mShowSubscriptionsBtn.setOnClickListener(this);
+        mStartSessionBtn.setOnClickListener(this);
+        mStopSessionBtn.setOnClickListener(this);
+        mInsertSegmentBtn.setOnClickListener(this);
+        mReadSessionBtn.setOnClickListener(this);
 
 
 
@@ -475,7 +723,6 @@ View.OnClickListener{
 
         //Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
 
-//lol
 //        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
 //
 //        mBarChart.addBar(new BarModel(monday, 0xFF123456));
@@ -577,6 +824,22 @@ View.OnClickListener{
             }
             case R.id.btn_show_subscriptions: {
                 showSubscriptions();
+                break;
+            }
+            case R.id.btn_start_session: {
+                startSession();
+                break;
+            }
+            case R.id.btn_stop_session: {
+                stopSession();
+                break;
+            }
+            case R.id.btn_insert_segment: {
+                insertSegment();
+                break;
+            }
+            case R.id.btn_read_session: {
+                readSession();
                 break;
             }
         }
