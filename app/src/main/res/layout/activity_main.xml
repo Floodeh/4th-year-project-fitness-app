@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
-    android:layout_height="fill_parent">
+    android:layout_height="fill_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
@@ -16,17 +16,34 @@
     tools:context="com.example.adamf.myfitnessapplicationgoogleapi.MainActivity"
     android:weightSum="1">
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:id="@+id/textView2" />
+    <RelativeLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
 
-    <TextView
+        <TextView
+            android:text="Steps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:id="@+id/textViewSteps" />
+
+        <TextView
         android:id="@+id/textView01"
-        android:text=""
+        android:text="0"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        ></TextView>
+        >
+
+    </TextView>
+
+    <TextView
+        android:id="@+id/textView_distance"
+        android:text="0"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        >
+
+    </TextView>
+</RelativeLayout>
 
     <Button
         android:paddingTop="16dp"
@@ -187,6 +204,16 @@
 
     </TextView>
 
+    <org.eazegraph.lib.charts.PieChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/piechart_distance_today"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:padding="7dp"
+        app:egLegendTextSize="18sp"
+        app:egUsePieRotation="true"
+        app:egValueTextSize="36sp"/>
+
     <org.eazegraph.lib.charts.BarChart
         xmlns:app="http://schemas.android.com/apk/res-auto"
         android:id="@+id/barchart"
@@ -196,6 +223,7 @@
         app:egFixedBarWidth="true"
         app:egBarWidth="20dp"
         app:egLegendHeight="40dp"/>
+
 
 </LinearLayout>
 </ScrollView>

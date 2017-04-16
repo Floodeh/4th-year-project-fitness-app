@@ -23,7 +23,9 @@ import android.view.MenuItem;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -69,6 +71,8 @@ import android.widget.Button;
 import android.view.View.OnClickListener;
 import com.google.android.gms.fitness.*;
 import com.google.android.gms.fitness.Fitness.*;
+import com.txusballesteros.widgets.FitChart;
+import com.txusballesteros.widgets.FitChartValue;
 
 
 import org.eazegraph.lib.charts.BarChart;
@@ -131,6 +135,7 @@ View.OnClickListener{
     private int thirdDay = 0;
     private int secondDay = 0;
     private int yesterDay = 0;
+    private double averageSteps = 0.0;
 
     private float seventhDayDistance = 0;
     private float sixthDayDistance = 0;
@@ -139,6 +144,12 @@ View.OnClickListener{
     private float thirdDayDistance = 0;
     private float secondDayDistance = 0;
     private float yesterDayDistance = 0;
+    private float distanceToday = 0;
+    private float averageDistance = 0;
+
+    public int walkingtime = 0;
+    public int stilltime = 0;
+    public int runningtime = 0;
 
     private final String SESSION_NAME = "session name";
     private Session mSession;
@@ -215,6 +226,11 @@ View.OnClickListener{
 
     public static class ActivityRecognizedService extends IntentService {
 
+        public int walkingtime = 0;
+        public int stilltime = 0;
+        public int runningtime = 0;
+
+
         public ActivityRecognizedService() {
             super("ActivityRecognizedService");
         }
@@ -262,7 +278,9 @@ View.OnClickListener{
                     }
                     case DetectedActivity.RUNNING: {
                         Log.e( "ActivityRecognition", "Running: " + activity.getConfidence() );
+                        runningtime = activity.getConfidence();
                         if( activity.getConfidence() >= 75 ) {
+
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Running?" );
                             builder.setSmallIcon( R.mipmap.ic_launcher );
@@ -273,6 +291,7 @@ View.OnClickListener{
                     }
                     case DetectedActivity.STILL: {
                         Log.e( "ActivityRecognition", "Still: " + activity.getConfidence() );
+                        stilltime = activity.getConfidence();
                         if( activity.getConfidence() >= 75 ) {
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you standing still?" );
@@ -288,6 +307,7 @@ View.OnClickListener{
                     }
                     case DetectedActivity.WALKING: {
                         Log.e( "ActivityRecognition", "Walking: " + activity.getConfidence() );
+                        walkingtime = activity.getConfidence();
                         if( activity.getConfidence() >= 75 ) {
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you walking?" );
@@ -731,6 +751,7 @@ View.OnClickListener{
         new FetchStepsAsync().execute();
         new ViewWeekStepCountGraphTask().execute();
         new ViewWeekDistanceCountGraphTask().execute();
+        new ViewTodaysDistanceCountGraphTask().execute();
         //new ViewWeekDistanceCountGraphTask().execute();
         //new FetchTimeAsync().execute();
         //new FetchCalorieAsync().execute();
@@ -945,6 +966,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewTodaysDistanceCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            todayDistanceGraph();
+            return null;
+        }
+    }
+
     private class ViewWeekCalorieCountTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             displayLastWeeksCaloriesData();
@@ -986,6 +1014,8 @@ View.OnClickListener{
             return null;
         }
     }
+
+
 
 //    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
 //        protected Void doInBackground(Void... params) {
@@ -1120,6 +1150,7 @@ View.OnClickListener{
             }
         }
 
+        averageSteps = seventhDay / 7;
         seventhDay = seventhDay - sixthDay - fifthDay - fourthDay - thirdDay - secondDay - yesterDay;
 
     }
@@ -1548,6 +1579,31 @@ View.OnClickListener{
         });
     }
 
+    private void todayDistanceGraph()
+    {
+        distanceToday();
+        final String myText=Float.toString(distanceToday);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                PieChart mPieChart = (PieChart) findViewById(R.id.piechart_distance_today);
+
+                mPieChart.addPieSlice(new PieModel("Distance Today", distanceToday,Color.parseColor("#FE6DA8")));
+                mPieChart.addPieSlice(new PieModel("Average Distance", averageDistance,Color.parseColor("#56B7F1")));
+                //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+
+                mPieChart.startAnimation();
+
+//                String adam = distanceToday.toString();
+//                int adamVal = Integer.parseInt(adam);
+
+                TextView textView = (TextView) findViewById(R.id.textView_distance);
+                textView.setText(myText);
+
+            }
+        });
+    }
+
     private void distanceSeventhDay() {
         //1 week ago
         Calendar cal1 = Calendar.getInstance();
@@ -1610,6 +1666,7 @@ View.OnClickListener{
             }
         }
 
+        averageDistance = seventhDayDistance / 7;
         seventhDayDistance = seventhDayDistance - sixthDayDistance - fifthDayDistance - fourthDayDistance - thirdDayDistance - secondDayDistance - yesterDayDistance;
 
     }
@@ -2267,6 +2324,28 @@ View.OnClickListener{
         showDataSet(result.getTotal());
     }
 
+    private void distanceToday()
+    {
+        //today
+        //RESETTING VARIABLES TO ZERO
+        distanceToday = 0;
+
+        PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_DISTANCE_DELTA);
+        DailyTotalResult totalResult = result1.await(30, TimeUnit.SECONDS);
+        if (totalResult.getStatus().isSuccess()) {
+            DataSet totalSet = totalResult.getTotal();
+            distanceToday = totalSet.isEmpty()
+                    ? 0
+                    : totalSet.getDataPoints().get(0).getValue(Field.FIELD_DISTANCE).asFloat();
+        } else {
+            Log.w(TAG, "There was a problem getting the distance count.");
+        }
+
+
+        Log.i(TAG, "Total distance today: " + distanceToday);
+
+    }
+
     private void displayDistanceDataForToday() {
         DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
         showDataSet(result.getTotal());
@@ -2429,12 +2508,12 @@ View.OnClickListener{
 
             String adam = aLong.toString();
             int adamVal = Integer.parseInt(adam);
-            PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
-
-            mPieChart.addPieSlice(new PieModel("Steps Today", adamVal,Color.parseColor("#FE6DA8")));
-            //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
-
-            mPieChart.startAnimation();
+//            PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+//
+//            mPieChart.addPieSlice(new PieModel("Steps Today", adamVal,Color.parseColor("#FE6DA8")));
+//            //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+//
+//            mPieChart.startAnimation();
 
             TextView textView = (TextView) findViewById(R.id.textView01);
             textView.setText(adam);
