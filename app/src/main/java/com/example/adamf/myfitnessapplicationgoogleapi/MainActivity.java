@@ -107,6 +107,7 @@ View.OnClickListener{
     private Button mStopSessionBtn;
     private Button mInsertSegmentBtn;
     private Button mReadSessionBtn;
+    private Button mButtonViewWeekDistanceGraph;
 
 
 
@@ -130,6 +131,14 @@ View.OnClickListener{
     private int thirdDay = 0;
     private int secondDay = 0;
     private int yesterDay = 0;
+
+    private float seventhDayDistance = 0;
+    private float sixthDayDistance = 0;
+    private float fifthDayDistance = 0;
+    private float fourthDayDistance = 0;
+    private float thirdDayDistance = 0;
+    private float secondDayDistance = 0;
+    private float yesterDayDistance = 0;
 
     private final String SESSION_NAME = "session name";
     private Session mSession;
@@ -526,6 +535,7 @@ View.OnClickListener{
         mStopSessionBtn = (Button) findViewById(R.id.btn_stop_session);
         mInsertSegmentBtn = (Button) findViewById(R.id.btn_insert_segment);
         mReadSessionBtn = (Button) findViewById(R.id.btn_read_session);
+        mButtonViewWeekDistanceGraph = (Button) findViewById(R.id.btn_view_week_distance_graph);
 
 
 
@@ -546,6 +556,8 @@ View.OnClickListener{
         mStopSessionBtn.setOnClickListener(this);
         mInsertSegmentBtn.setOnClickListener(this);
         mReadSessionBtn.setOnClickListener(this);
+        mButtonViewWeekDistanceGraph.setOnClickListener(this);
+
 
 
 
@@ -717,6 +729,9 @@ View.OnClickListener{
 
 
         new FetchStepsAsync().execute();
+        new ViewWeekStepCountGraphTask().execute();
+        new ViewWeekDistanceCountGraphTask().execute();
+        //new ViewWeekDistanceCountGraphTask().execute();
         //new FetchTimeAsync().execute();
         //new FetchCalorieAsync().execute();
 
@@ -842,6 +857,10 @@ View.OnClickListener{
                 readSession();
                 break;
             }
+            case R.id.btn_view_week_distance_graph: {
+                new ViewWeekDistanceCountGraphTask().execute();
+                break;
+            }
         }
     }
 
@@ -915,6 +934,13 @@ View.OnClickListener{
     private class ViewWeekStepCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             weekStepsGraph();
+            return null;
+        }
+    }
+
+    private class ViewWeekDistanceCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            weekDistanceGraph();
             return null;
         }
     }
@@ -1490,6 +1516,497 @@ View.OnClickListener{
             }
         }
         sixthDay = sixthDay - fifthDay - fourthDay - thirdDay - secondDay - yesterDay;
+
+    }
+
+    private void weekDistanceGraph()
+    {
+        distanceYesterday();
+        distanceSecondDay();
+        distanceThirdDay();
+        distanceFourthDay();
+        distanceFifthDay();
+        distanceSixthDay();
+        distanceSeventhDay();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
+
+
+                mBarChart.addBar(new BarModel(seventhDayDistance, 0xFF123456));
+                mBarChart.addBar(new BarModel(sixthDayDistance,  0xFF343456));
+                mBarChart.addBar(new BarModel(fifthDayDistance, 0xFF563456));
+                mBarChart.addBar(new BarModel(fourthDayDistance, 0xFF873F56));
+                mBarChart.addBar(new BarModel(thirdDayDistance, 0xFF56B7F1));
+                mBarChart.addBar(new BarModel(secondDayDistance,  0xFF343456));
+                mBarChart.addBar(new BarModel(yesterDayDistance, 0xFF1FF4AC));
+
+                mBarChart.startAnimation();
+
+            }
+        });
+    }
+
+    private void distanceSeventhDay() {
+        //1 week ago
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DATE, -7);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        seventhDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 7 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR SEVEN DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                seventhDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Seventh day: " + seventhDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+        seventhDayDistance = seventhDayDistance - sixthDayDistance - fifthDayDistance - fourthDayDistance - thirdDayDistance - secondDayDistance - yesterDayDistance;
+
+    }
+
+    private void distanceYesterday() {
+        //YESTERDAY
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -1);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        yesterDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded yesterday
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR YESTERDAY
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                yesterDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Yesterday: " + yesterDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+    }
+
+    private void distanceSecondDay() {
+        //2 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -2);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        secondDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 2 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 2 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                secondDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Second Day: " + secondDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        secondDayDistance = secondDayDistance - yesterDayDistance;
+
+    }
+
+    private void distanceThirdDay() {
+        //3 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -3);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        thirdDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 3 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 3 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                thirdDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Third Day: " + thirdDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        thirdDayDistance = thirdDayDistance - secondDayDistance - yesterDayDistance;
+
+    }
+
+
+    private void distanceFourthDay() {
+        //4 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -4);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        fourthDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 4 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 4 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                fourthDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Fourth Day: " + fourthDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        fourthDayDistance = fourthDayDistance - thirdDayDistance - secondDayDistance - yesterDayDistance;
+
+    }
+
+    private void distanceFifthDay() {
+        //5 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -5);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        fifthDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 5 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 5 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                fifthDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Fifth Day: " + fifthDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        fifthDayDistance = fifthDayDistance - fourthDayDistance - thirdDayDistance - secondDayDistance - yesterDayDistance;
+
+    }
+
+    private void distanceSixthDay() {
+        //6 DAYS AGO
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.DAY_OF_WEEK, -6);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        sixthDayDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 6 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR 6 DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    //showDataSet(dataSet);
+                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
+                    //String adam = adamDp.getValue(adamField).toString();
+                    //final int adamflood = Integer.parseInt(adam);
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                sixthDayDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Sixth Day: " + sixthDayDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+        sixthDayDistance = sixthDayDistance - fifthDayDistance - fourthDayDistance - thirdDayDistance - secondDayDistance - yesterDayDistance;
 
     }
 

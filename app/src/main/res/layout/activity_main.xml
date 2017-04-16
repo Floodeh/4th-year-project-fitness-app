@@ -13,7 +13,8 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.example.adamf.myfitnessapplicationgoogleapi.MainActivity">
+    tools:context="com.example.adamf.myfitnessapplicationgoogleapi.MainActivity"
+    android:weightSum="1">
 
     <TextView
         android:layout_width="match_parent"
@@ -132,7 +133,23 @@
         android:layout_height="wrap_content"
         android:text="Read Sessions" />
 
+    <Button
+        android:id="@+id/btn_view_week_distance_graph"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Read Sessions" />
 
+
+    <TextView
+        android:id="@+id/steps_stats"
+        android:text="Steps"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Holo.Large"
+        android:textSize="36sp"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+    </TextView>
 
     <org.eazegraph.lib.charts.PieChart
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -145,15 +162,6 @@
         app:egValueTextSize="36sp"/>
 
 
-    <!--<org.eazegraph.lib.charts.BarChart-->
-        <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
-        <!--android:id="@+id/barchart"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="256dp"-->
-        <!--android:padding="10dp"-->
-        <!--app:egFixedBarWidth="true"-->
-        <!--app:egBarWidth="20dp"-->
-        <!--app:egLegendHeight="40dp"/>-->
 
     <org.eazegraph.lib.charts.ValueLineChart
         xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -166,6 +174,28 @@
         app:egIndicatorLineColor="#FE6DA8"
         app:egLegendHeight="40dp"
         app:egShowStandardValue="true"/>
+
+    <TextView
+        android:id="@+id/distance_stats"
+        android:text="Distance"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Holo.Large"
+        android:textSize="36sp"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+
+    </TextView>
+
+    <org.eazegraph.lib.charts.BarChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/barchart"
+        android:layout_width="match_parent"
+        android:layout_height="256dp"
+        android:padding="10dp"
+        app:egFixedBarWidth="true"
+        app:egBarWidth="20dp"
+        app:egLegendHeight="40dp"/>
 
 </LinearLayout>
 </ScrollView>
