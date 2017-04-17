@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto">
@@ -16,6 +17,7 @@
     tools:context="com.example.adamf.myfitnessapplicationgoogleapi.MainActivity"
     android:weightSum="1">
 
+
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
         android:layout_width="fill_parent"
@@ -23,11 +25,12 @@
 
     <ImageView
         android:id="@+id/flag"
-        android:layout_width="fill_parent"
-        android:layout_alignParentRight="true"
+        android:layout_width="wrap_content"
         android:scaleType="fitXY"
         android:src="@drawable/walker_home"
-        android:layout_height="265dp" />
+        android:layout_height="265dp"
+        android:adjustViewBounds="true"
+        android:layout_alignWithParentIfMissing="false" />
 
         <TextView
             android:text="Distance"
@@ -37,15 +40,8 @@
             android:layout_marginTop="190dp"
             android:id="@+id/textViewDistance"
             android:paddingRight="5dp"
-            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
-
-        <TextView
-            android:id="@+id/textView_distance"
-            android:text="0"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@id/textViewDistance"
-            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:textSize="18sp" />
 
 
         <TextView
@@ -60,7 +56,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
 
         <TextView
-            android:text="Time"
+            android:text="Time(m)"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewTime"
@@ -70,7 +66,8 @@
             android:layout_marginEnd="13dp"
             android:layout_above="@+id/textView_time"
             android:layout_alignParentRight="true"
-            android:layout_alignParentEnd="true" />
+            android:layout_alignParentEnd="true"
+            android:textSize="18sp" />
 
         <TextView
             android:text="0"
@@ -103,7 +100,8 @@
             android:layout_toRightOf="@+id/textViewDistance"
             android:layout_toEndOf="@+id/textViewDistance"
             android:layout_marginLeft="17dp"
-            android:layout_marginStart="17dp" />
+            android:layout_marginStart="17dp"
+            android:textSize="18sp" />
 
         <TextView
             android:text="Calories"
@@ -116,7 +114,20 @@
             android:layout_toLeftOf="@+id/textView_time"
             android:layout_toStartOf="@+id/textView_time"
             android:layout_marginRight="12dp"
-            android:layout_marginEnd="12dp" />
+            android:layout_marginEnd="12dp"
+            android:textSize="18sp" />
+
+        <TextView
+            android:id="@+id/textView_distance"
+            android:text="0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:layout_marginLeft="11dp"
+            android:layout_marginStart="11dp"
+            android:layout_below="@+id/textViewDistance"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true" />
 
     </RelativeLayout>
 
@@ -125,7 +136,8 @@
         android:id="@+id/btn_view_week"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="View this weeks steps" />
+        android:text="View this weeks steps"
+        android:layout_weight="0.09" />
 
     <Button
         android:paddingTop="16dp"

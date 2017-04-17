@@ -2451,7 +2451,7 @@ View.OnClickListener{
         //RESETTING VARIABLES TO ZERO
         timeToday = 0;
 
-        PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.AGGREGATE_ACTIVITY_SUMMARY);
+        PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT);
         DailyTotalResult totalResult = result1.await(30, TimeUnit.SECONDS);
         if (totalResult.getStatus().isSuccess()) {
             DataSet totalSet = totalResult.getTotal();
@@ -2461,6 +2461,8 @@ View.OnClickListener{
         } else {
             Log.w(TAG, "There was a problem getting the time count.");
         }
+
+        timeToday = (timeToday / (1000 * 60)) % 60;
 
 
         Log.i(TAG, "Total time today: " + timeToday);
