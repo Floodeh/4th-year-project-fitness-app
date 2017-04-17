@@ -16,34 +16,109 @@
     tools:context="com.example.adamf.myfitnessapplicationgoogleapi.MainActivity"
     android:weightSum="1">
 
-    <RelativeLayout
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content">
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent" >
+
+    <ImageView
+        android:id="@+id/flag"
+        android:layout_width="fill_parent"
+        android:layout_alignParentRight="true"
+        android:scaleType="fitXY"
+        android:src="@drawable/walker_home"
+        android:layout_height="265dp" />
+
+        <TextView
+            android:text="Distance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true"
+            android:layout_marginTop="190dp"
+            android:id="@+id/textViewDistance"
+            android:paddingRight="5dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
+
+        <TextView
+            android:id="@+id/textView_distance"
+            android:text="0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/textViewDistance"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
+
+
+        <TextView
+            android:text="0"
+            android:layout_width="50dp"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@+id/textView_caloriesval"
+            android:layout_alignLeft="@+id/textViewTime"
+            android:layout_alignStart="@+id/textViewTime"
+            android:paddingLeft="10dp"
+            android:id="@+id/textView_time"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
+
+        <TextView
+            android:text="Time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textViewTime"
+            android:paddingLeft="10dp"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:layout_marginRight="13dp"
+            android:layout_marginEnd="13dp"
+            android:layout_above="@+id/textView_time"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentEnd="true" />
+
+        <TextView
+            android:text="0"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView_stepsval"
+            android:layout_below="@+id/textViewforSteps"
+            android:layout_alignLeft="@+id/textViewforSteps"
+            android:layout_alignStart="@+id/textViewforSteps"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
+
+        <TextView
+            android:text="0"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView_caloriesval"
+            android:layout_below="@+id/textViewForCalories"
+            android:layout_alignLeft="@+id/textViewForCalories"
+            android:layout_alignStart="@+id/textViewForCalories"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:layout_width="wrap_content" />
 
         <TextView
             android:text="Steps"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/textViewSteps" />
+            android:id="@+id/textViewforSteps"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:layout_alignBaseline="@+id/textViewDistance"
+            android:layout_alignBottom="@+id/textViewDistance"
+            android:layout_toRightOf="@+id/textViewDistance"
+            android:layout_toEndOf="@+id/textViewDistance"
+            android:layout_marginLeft="17dp"
+            android:layout_marginStart="17dp" />
 
         <TextView
-        android:id="@+id/textView01"
-        android:text="0"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        >
+            android:text="Calories"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textViewForCalories"
+            android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
+            android:layout_alignBaseline="@+id/textViewforSteps"
+            android:layout_alignBottom="@+id/textViewforSteps"
+            android:layout_toLeftOf="@+id/textView_time"
+            android:layout_toStartOf="@+id/textView_time"
+            android:layout_marginRight="12dp"
+            android:layout_marginEnd="12dp" />
 
-    </TextView>
-
-    <TextView
-        android:id="@+id/textView_distance"
-        android:text="0"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        >
-
-    </TextView>
-</RelativeLayout>
+    </RelativeLayout>
 
     <Button
         android:paddingTop="16dp"

@@ -4,6 +4,9 @@ import android.Manifest;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.content.Intent;
@@ -20,9 +23,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -146,6 +151,10 @@ View.OnClickListener{
     private float yesterDayDistance = 0;
     private float distanceToday = 0;
     private float averageDistance = 0;
+
+    private int timeToday = 0;
+
+    private float caloriesToday = 0;
 
     public int walkingtime = 0;
     public int stilltime = 0;
@@ -533,6 +542,7 @@ View.OnClickListener{
         });
     }
 
+
     private void initViews() {
 
         //TextView textView = (TextView) findViewById(R.id.textView01);
@@ -727,6 +737,9 @@ View.OnClickListener{
                 .setDataSourceTypes(DataSource.TYPE_RAW)
                 .build();
 
+        new AddWeight().execute();
+        new AddHeight().execute();
+
         DataSourcesRequest dataSourceRequest2 = new DataSourcesRequest.Builder()
                 .setDataTypes(DataType.TYPE_CALORIES_EXPENDED)
                 .setDataSourceTypes(DataSource.TYPE_RAW)
@@ -752,6 +765,8 @@ View.OnClickListener{
         new ViewWeekStepCountGraphTask().execute();
         new ViewWeekDistanceCountGraphTask().execute();
         new ViewTodaysDistanceCountGraphTask().execute();
+        new ViewTodaysTimeCountGraphTask().execute();
+        new ViewTodaysCalorieCountGraphTask().execute();
         //new ViewWeekDistanceCountGraphTask().execute();
         //new FetchTimeAsync().execute();
         //new FetchCalorieAsync().execute();
@@ -945,6 +960,20 @@ View.OnClickListener{
     }
 
 
+    private class AddWeight extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            addWeightDataToGoogleFit();
+            return null;
+        }
+    }
+
+    private class AddHeight extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            addHeightDataToGoogleFit();
+            return null;
+        }
+    }
+
     private class ViewWeekStepCountTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             displayLastWeeksData();
@@ -969,6 +998,20 @@ View.OnClickListener{
     private class ViewTodaysDistanceCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayDistanceGraph();
+            return null;
+        }
+    }
+
+    private class ViewTodaysTimeCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            todayTimeGraph();
+            return null;
+        }
+    }
+
+    private class ViewTodaysCalorieCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            todayCaloriesGraph();
             return null;
         }
     }
@@ -1582,7 +1625,9 @@ View.OnClickListener{
     private void todayDistanceGraph()
     {
         distanceToday();
-        final String myText=Float.toString(distanceToday);
+        //final String myText=Float.toString(distanceToday);
+        final DecimalFormat df = new DecimalFormat("#.0");
+        final String formattedDistance = df.format(distanceToday);
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
@@ -1598,7 +1643,39 @@ View.OnClickListener{
 //                int adamVal = Integer.parseInt(adam);
 
                 TextView textView = (TextView) findViewById(R.id.textView_distance);
+                textView.setText(formattedDistance);
+
+            }
+        });
+    }
+
+    private void todayTimeGraph()
+    {
+        timeToday();
+        final String myText=Integer.toString(timeToday);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                TextView textView = (TextView) findViewById(R.id.textView_time);
                 textView.setText(myText);
+
+            }
+        });
+    }
+
+    private void todayCaloriesGraph()
+    {
+        caloriesToday();
+        //final String myText=Float.toString(caloriesToday);
+        final DecimalFormat df = new DecimalFormat("#.0");
+        final String formattedCalories = df.format(caloriesToday);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                TextView textView = (TextView) findViewById(R.id.textView_caloriesval);
+                textView.setText(formattedCalories);
 
             }
         });
@@ -2346,6 +2423,50 @@ View.OnClickListener{
 
     }
 
+    private void caloriesToday()
+    {
+        //today
+        //RESETTING VARIABLES TO ZERO
+        caloriesToday = 0;
+
+        PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_CALORIES_EXPENDED);
+        DailyTotalResult totalResult = result1.await(30, TimeUnit.SECONDS);
+        if (totalResult.getStatus().isSuccess()) {
+            DataSet totalSet = totalResult.getTotal();
+            caloriesToday = totalSet.isEmpty()
+                    ? 0
+                    : totalSet.getDataPoints().get(0).getValue(Field.FIELD_CALORIES).asFloat();
+        } else {
+            Log.w(TAG, "There was a problem getting the Calories count.");
+        }
+
+
+        Log.i(TAG, "Total calories today: " + caloriesToday);
+
+    }
+
+    private void timeToday()
+    {
+        //today
+        //RESETTING VARIABLES TO ZERO
+        timeToday = 0;
+
+        PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.AGGREGATE_ACTIVITY_SUMMARY);
+        DailyTotalResult totalResult = result1.await(30, TimeUnit.SECONDS);
+        if (totalResult.getStatus().isSuccess()) {
+            DataSet totalSet = totalResult.getTotal();
+            timeToday = totalSet.isEmpty()
+                    ? 0
+                    : totalSet.getDataPoints().get(0).getValue(Field.FIELD_DURATION).asInt();
+        } else {
+            Log.w(TAG, "There was a problem getting the time count.");
+        }
+
+
+        Log.i(TAG, "Total time today: " + timeToday);
+
+    }
+
     private void displayDistanceDataForToday() {
         DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
         showDataSet(result.getTotal());
@@ -2371,6 +2492,7 @@ View.OnClickListener{
 
         dataSet.add(dataPoint);
 
+
         return dataSet;
     }
 
@@ -2383,19 +2505,50 @@ View.OnClickListener{
         cal.add(Calendar.HOUR_OF_DAY, -1);
         long startTime = cal.getTimeInMillis();
 
+
         float weight = 81;
         DataSet weightDataSet = createDataForRequest(
-                DataType.TYPE_WEIGHT,    // for height, it would be DataType.TYPE_HEIGHT
+                DataType.TYPE_WEIGHT,    // for weight, it would be DataType.TYPE_WEIGHT
                 DataSource.TYPE_RAW,
                 weight,                  // weight in kgs
                 startTime,              // start time
                 endTime,                // end time
-                TimeUnit.MILLISECONDS                // Time Unit, for example, TimeUnit.MILLISECONDS
+                TimeUnit.MILLISECONDS
         );
 
         com.google.android.gms.common.api.Status weightInsertStatus =
                 Fitness.HistoryApi.insertData(mApiClient, weightDataSet)
                         .await(1, TimeUnit.MINUTES);
+
+        Log.e( "History", "data inserted" + weight );
+
+    }
+
+    private void addHeightDataToGoogleFit() {
+        //Adds height spread out evenly from start time to end time
+        Calendar cal = Calendar.getInstance();
+        Date now = new Date();
+        cal.setTime(now);
+        long endTime = cal.getTimeInMillis();
+        cal.add(Calendar.HOUR_OF_DAY, -1);
+        long startTime = cal.getTimeInMillis();
+
+        String newheight = "1.8";
+        float height = Float.parseFloat(newheight);
+        DataSet heightDataSet = createDataForRequest(
+                DataType.TYPE_HEIGHT,    // for height, it would be DataType.TYPE_HEIGHT
+                DataSource.TYPE_RAW,
+                height,                  // height in meters
+                startTime,              // start time
+                endTime,                // end time
+                TimeUnit.MILLISECONDS
+        );
+
+        com.google.android.gms.common.api.Status heightInsertStatus =
+                Fitness.HistoryApi.insertData(mApiClient, heightDataSet)
+                        .await(1, TimeUnit.MINUTES);
+
+        Log.e( "History", "data inserted" + height );
 
     }
 
@@ -2515,7 +2668,7 @@ View.OnClickListener{
 //
 //            mPieChart.startAnimation();
 
-            TextView textView = (TextView) findViewById(R.id.textView01);
+            TextView textView = (TextView) findViewById(R.id.textView_stepsval);
             textView.setText(adam);
 
 
