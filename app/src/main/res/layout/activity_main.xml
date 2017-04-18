@@ -208,6 +208,27 @@
         android:text="Read Sessions" />
 
     <TextView
+        android:id="@+id/lifetime_stats"
+        android:text="Lifetime Totals"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Holo.Large"
+        android:textSize="36sp"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+    </TextView>
+
+    <org.eazegraph.lib.charts.BarChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/barchart_lifetime_totals"
+        android:layout_width="match_parent"
+        android:layout_height="256dp"
+        android:padding="10dp"
+        app:egFixedBarWidth="true"
+        app:egBarWidth="30dp"
+        app:egLegendHeight="40dp" />
+
+    <TextView
         android:id="@+id/calories_stats"
         android:text="Calories"
         android:layout_width="348dp"
@@ -218,15 +239,36 @@
         android:textAlignment="center">
     </TextView>
 
-    <!--<org.eazegraph.lib.charts.BarChart-->
-        <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
-        <!--android:id="@+id/barchart_calories"-->
-        <!--android:layout_width="match_parent"-->
-        <!--android:layout_height="256dp"-->
-        <!--android:padding="10dp"-->
-        <!--app:egFixedBarWidth="true"-->
-        <!--app:egBarWidth="30dp"-->
-        <!--app:egLegendHeight="40dp" />-->
+    <TextView
+        android:id="@+id/calories_stats_today"
+        android:text="Today Vs Average"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Large"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+    </TextView>
+
+    <org.eazegraph.lib.charts.BarChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/barchart_calories_today"
+        android:layout_width="match_parent"
+        android:layout_height="256dp"
+        android:padding="10dp"
+        app:egFixedBarWidth="true"
+        app:egBarWidth="30dp"
+        app:egLegendHeight="40dp" />
+
+    <TextView
+        android:id="@+id/calories_stats_week"
+        android:text="This Week (tap for info)"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Large"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+    </TextView>
+
     <org.eazegraph.lib.charts.ValueLineChart
         android:id="@+id/linechart_calories"
         android:layout_width="match_parent"
@@ -248,6 +290,16 @@
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
         android:textSize="36sp"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+    </TextView>
+
+    <TextView
+        android:id="@+id/steps_stats_today"
+        android:text="Today Vs Average"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Large"
         android:layout_weight="0.19"
         android:textAlignment="center">
     </TextView>

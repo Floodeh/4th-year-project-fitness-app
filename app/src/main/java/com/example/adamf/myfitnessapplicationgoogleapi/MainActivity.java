@@ -135,7 +135,8 @@ View.OnClickListener{
     private int thirdDay = 0;
     private int secondDay = 0;
     private int yesterDay = 0;
-    private double averageSteps = 0.0;
+    private float averageSteps = 0;
+    private int lifetimeTotalSteps = 0;
 
     private float seventhDayDistance = 0;
     private float sixthDayDistance = 0;
@@ -145,6 +146,7 @@ View.OnClickListener{
     private float secondDayDistance = 0;
     private float yesterDayDistance = 0;
     private float averageDistance = 0;
+    private float lifetimeTotalDistance = 0;
 
     private float seventhDayCalories = 0;
     private float sixthDayCalories = 0;
@@ -154,15 +156,12 @@ View.OnClickListener{
     private float secondDayCalories = 0;
     private float yesterDayCalories = 0;
     private float averageCalories = 0;
+    private float lifetimeTotalCalories = 0;
 
     private float distanceToday = 0;
     private int timeToday = 0;
     private float caloriesToday = 0;
-
-    private float totalDistance = 0;
-    private int totalTime = 0;
-    private int totalSteps = 0;
-    private float totalCalories = 0;
+    private int stepsToday = 0;
 
 
     public static int walkingTime = 0;
@@ -711,12 +710,14 @@ View.OnClickListener{
 
 
         new FetchStepsAsync().execute();
+        new ViewLifetimeTotalCountGraphTask().execute();
         new ViewWeekStepCountGraphTask().execute();
         new ViewWeekDistanceCountGraphTask().execute();
         new ViewWeekCaloriesCountGraphTask().execute();
         new ViewTodaysDistanceCountGraphTask().execute();
         new ViewTodaysTimeCountGraphTask().execute();
         new ViewTodaysCalorieCountGraphTask().execute();
+        new ViewTodaysStepCountGraphTask().execute();
         //new ViewWeekDistanceCountGraphTask().execute();
         //new FetchTimeAsync().execute();
         //new FetchCalorieAsync().execute();
@@ -939,6 +940,13 @@ View.OnClickListener{
         }
     }
 
+    private class ViewTodaysStepCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            todayStepsGraph();
+            return null;
+        }
+    }
+
     private class ViewTodaysTimeCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayTimeGraph();
@@ -949,6 +957,13 @@ View.OnClickListener{
     private class ViewTodaysCalorieCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayCaloriesGraph();
+            return null;
+        }
+    }
+
+    private class ViewLifetimeTotalCountGraphTask extends AsyncTask<Void, Void, Void> {
+        protected Void doInBackground(Void... params) {
+            lifetimeTotalGraph();
             return null;
         }
     }
@@ -1039,6 +1054,67 @@ View.OnClickListener{
                 mCubicValueLineChart.startAnimation();
             }
         });
+    }
+
+    private void stepsLifetimeTotal() {
+        //1 week ago
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.YEAR, -1);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        lifetimeTotalSteps = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many steps were walked and recorded since installation
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_STEP_COUNT_DELTA, DataType.AGGREGATE_STEP_COUNT_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR SEVEN DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("steps")) {
+                                lifetimeTotalSteps += dp.getValue(field).asInt();
+                                Log.d(TAG, "Lifetime Total Steps: " + lifetimeTotalSteps);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+
     }
 
     private void stepsSeventhDay() {
@@ -1636,6 +1712,66 @@ View.OnClickListener{
 
     }
 
+    private void caloriesLifetimeTotal() {
+        //1 week ago
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.YEAR, -1);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        lifetimeTotalCalories = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many calories were burned and recorded 7 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_CALORIES_EXPENDED, DataType.AGGREGATE_CALORIES_EXPENDED)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR SEVEN DAYS AGO
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("calories")) {
+                                lifetimeTotalCalories += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Seventh day: " + lifetimeTotalCalories);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
+    }
+
     private void caloriesSixthDay() {
         //1 week ago
         Calendar cal1 = Calendar.getInstance();
@@ -2091,6 +2227,31 @@ View.OnClickListener{
         });
     }
 
+    private void todayStepsGraph()
+    {
+        stepsToday();
+        final String stepToday = Integer.toString(stepsToday);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+
+                mPieChart.addPieSlice(new PieModel("Steps Today", stepsToday,Color.parseColor("#FE6DA8")));
+                mPieChart.addPieSlice(new PieModel("Average Steps", averageSteps,Color.parseColor("#56B7F1")));
+                //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+
+                mPieChart.startAnimation();
+
+//                String adam = distanceToday.toString();
+//                int adamVal = Integer.parseInt(adam);
+
+                TextView textView = (TextView) findViewById(R.id.textView_stepsval);
+                textView.setText(stepToday);
+
+            }
+        });
+    }
+
     private void todayTimeGraph()
     {
         timeToday();
@@ -2116,11 +2277,100 @@ View.OnClickListener{
             @Override
             public void run() {
 
+                BarChart mBarChart = (BarChart) findViewById(R.id.barchart_calories_today);
+
+                mBarChart.addBar(new BarModel("Todays Calories", caloriesToday, 0xFF123456));
+                mBarChart.addBar(new BarModel("Average This Week", averageCalories,  0xFF1FF4AC));
+
+                mBarChart.startAnimation();
+
                 TextView textView = (TextView) findViewById(R.id.textView_caloriesval);
                 textView.setText(formattedCalories);
 
             }
         });
+    }
+
+    private void lifetimeTotalGraph()
+    {
+        stepsLifetimeTotal();
+        caloriesLifetimeTotal();
+        distanceLifetimeTotal();
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+
+                BarChart mBarChart = (BarChart) findViewById(R.id.barchart_lifetime_totals);
+
+                mBarChart.addBar(new BarModel("Total Steps", lifetimeTotalSteps, 0xFF123456));
+                mBarChart.addBar(new BarModel("Total Calories", lifetimeTotalCalories, 0xFF123456));
+                mBarChart.addBar(new BarModel("Total Distance", lifetimeTotalDistance, 0xFF123456));
+
+                mBarChart.startAnimation();
+
+            }
+        });
+    }
+
+    private void distanceLifetimeTotal() {
+        //1 week ago
+        Calendar cal1 = Calendar.getInstance();
+        Date now1 = new Date();
+        cal1.setTime(now1);
+        long endTime1 = cal1.getTimeInMillis();
+        cal1.add(Calendar.YEAR, -1);
+        long startTime1 = cal1.getTimeInMillis();
+
+        //RESETTING VARIABLES TO ZERO
+        lifetimeTotalDistance = 0;
+
+
+        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
+        Log.e("History", "Range Start: " + dateFormat.format(startTime1));
+        Log.e("History", "Range End: " + dateFormat.format(endTime1));
+
+
+        //Check how many distance were walked and recorded 7 days ago
+        DataReadRequest readRequest1 = new DataReadRequest.Builder()
+                .aggregate(DataType.TYPE_DISTANCE_DELTA, DataType.AGGREGATE_DISTANCE_DELTA)
+                .bucketByTime(1, TimeUnit.DAYS)
+                .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
+                .enableServerQueries()
+                .build();
+
+
+
+        DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
+
+
+        //THIS IS FOR TOTAL DISTANCE
+        if (dataReadResult1.getBuckets().size() > 0) {
+            Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
+            for (Bucket bucket : dataReadResult1.getBuckets()) {
+                List<DataSet> dataSets = bucket.getDataSets();
+                for (DataSet dataSet : dataSets) {
+                    for (DataPoint dp : dataSet.getDataPoints()) {
+                        for (Field field : dp.getDataType().getFields()) {
+                            if (field.getName().equals("distance")) {
+                                lifetimeTotalDistance += dp.getValue(field).asFloat();
+                                Log.d(TAG, "Lifetime Total distance: " + lifetimeTotalDistance);
+                            }
+                        }
+                    }
+
+                }
+            }
+        }
+
+
+        //Used for non-aggregated data
+        else if (dataReadResult1.getDataSets().size() > 0) {
+            Log.e("History", "Number of returned DataSets: " + dataReadResult1.getDataSets().size());
+            for (DataSet dataSet : dataReadResult1.getDataSets()) {
+                showDataSet(dataSet);
+            }
+        }
+
     }
 
     private void distanceSeventhDay() {
@@ -2148,6 +2398,7 @@ View.OnClickListener{
                 .setTimeRange(startTime1, endTime1, TimeUnit.MILLISECONDS)
                 .enableServerQueries()
                 .build();
+
 
 
         DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
@@ -2836,6 +3087,28 @@ View.OnClickListener{
 
     }
 
+    private void stepsToday()
+    {
+        //today
+        //RESETTING VARIABLES TO ZERO
+        stepsToday = 0;
+
+        PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_STEP_COUNT_DELTA);
+        DailyTotalResult totalResult = result1.await(30, TimeUnit.SECONDS);
+        if (totalResult.getStatus().isSuccess()) {
+            DataSet totalSet = totalResult.getTotal();
+            stepsToday = totalSet.isEmpty()
+                    ? 0
+                    : totalSet.getDataPoints().get(0).getValue(Field.FIELD_STEPS).asInt();
+        } else {
+            Log.w(TAG, "There was a problem getting the steps count.");
+        }
+
+
+        Log.i(TAG, "Total Steps today: " + stepsToday);
+
+    }
+
     private void caloriesToday()
     {
         //today
@@ -3079,8 +3352,8 @@ View.OnClickListener{
 //
 //            mPieChart.startAnimation();
 
-            TextView textView = (TextView) findViewById(R.id.textView_stepsval);
-            textView.setText(adam);
+//            TextView textView = (TextView) findViewById(R.id.textView_stepsval);
+//            textView.setText(adam);
 
 
 
