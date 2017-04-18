@@ -2783,8 +2783,12 @@ View.OnClickListener{
         distanceLifetimeTotal();
         timeLifetimeTotal();
         //Conversion of milliseconds to minutes
-        lifetimeTotalTime = (lifetimeTotalTime / (1000 * 60)) % 60;
+        lifetimeTotalTime = (lifetimeTotalTime / (1000 * 60));
 
+        final String lifetimeTotalCalTv = Float.toString(lifetimeTotalCalories);
+        final String lifetimeTotalDisTv = Float.toString(lifetimeTotalDistance);
+        final String lifetimeTotalStepTv = Float.toString(lifetimeTotalSteps);
+        final String lifetimeTotalTimeTv = Float.toString(lifetimeTotalTime);
 
         runOnUiThread(new Runnable() {
             @Override
@@ -2798,6 +2802,15 @@ View.OnClickListener{
                 mBarChart.addBar(new BarModel("Total Time", lifetimeTotalTime, 0xFF123456));
 
                 mBarChart.startAnimation();
+
+                TextView textView = (TextView) findViewById(R.id.textView_lifetime_calories);
+                textView.setText(lifetimeTotalCalTv);
+                TextView textView1 = (TextView) findViewById(R.id.textView_lifetime_distance);
+                textView1.setText(lifetimeTotalDisTv);
+                TextView textView2 = (TextView) findViewById(R.id.textView_lifetime_time);
+                textView2.setText(lifetimeTotalTimeTv);
+                TextView textView3 = (TextView) findViewById(R.id.textView_lifetime_steps);
+                textView3.setText(lifetimeTotalStepTv);
 
             }
         });
