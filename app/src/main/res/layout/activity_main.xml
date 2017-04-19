@@ -3,7 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:keepScreenOn="true">
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/activity_main"
@@ -143,29 +144,6 @@
         <!--android:layout_height="wrap_content"-->
         <!--android:text="Update step data for yesterday" />-->
 
-    <Button
-        android:id="@+id/btn_start_session"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start a Session" />
-
-    <Button
-        android:id="@+id/btn_stop_session"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Stop a Session" />
-
-    <Button
-        android:id="@+id/btn_insert_segment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Insert an Activity Segment " />
-
-    <Button
-        android:id="@+id/btn_read_session"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Read Sessions" />
 
     <TextView
         android:id="@+id/lifetime_stats"
@@ -175,7 +153,8 @@
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
         android:textSize="36sp"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingBottom="20dp">
     </TextView>
 
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -308,7 +287,8 @@
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="50dp">
     </TextView>
 
     <org.eazegraph.lib.charts.BarChart
@@ -329,7 +309,8 @@
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
         android:textSize="36sp"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="50dp">
     </TextView>
 
     <TextView
@@ -359,7 +340,8 @@
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="20dp">
     </TextView>
 
     <org.eazegraph.lib.charts.ValueLineChart
@@ -384,7 +366,8 @@
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
         android:textSize="36sp"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="50dp">
     </TextView>
 
     <TextView
@@ -415,7 +398,8 @@
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="20dp">
     </TextView>
 
     <org.eazegraph.lib.charts.ValueLineChart
@@ -439,7 +423,8 @@
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
         android:textSize="36sp"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="50dp">
 
     </TextView>
 
@@ -470,7 +455,8 @@
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="20dp">
     </TextView>
 
     <org.eazegraph.lib.charts.BarChart
@@ -492,12 +478,13 @@
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
         android:textSize="36sp"
         android:layout_weight="0.19"
-        android:textAlignment="center">
+        android:textAlignment="center"
+        android:paddingTop="50dp">
     </TextView>
 
     <TextView
         android:id="@+id/time_stats_week"
-        android:text="This Week"
+        android:text="This Week (tap for info)"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -517,6 +504,44 @@
         app:egLegendHeight="40dp"
         app:egShowStandardValue="true"
         app:egIndicatorTextUnit="minutes"/>
+
+
+    <TextView
+        android:id="@+id/unfinished"
+        android:text="Unfinished Development"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Holo.Large"
+        android:textSize="36sp"
+        android:layout_weight="0.19"
+        android:textAlignment="center"
+        android:paddingTop="50dp">
+
+    </TextView>
+
+    <Button
+        android:id="@+id/btn_start_session"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start a Session" />
+
+    <Button
+        android:id="@+id/btn_stop_session"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Stop a Session" />
+
+    <Button
+        android:id="@+id/btn_insert_segment"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Insert an Activity Segment " />
+
+    <Button
+        android:id="@+id/btn_read_session"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Read Sessions" />
 
 
 

@@ -37,4 +37,5 @@ dependencies {
     compile 'com.github.blackfizz:eazegraph:1.2.2@aar'
     compile 'com.nineoldandroids:library:2.4.0'
     testCompile 'junit:junit:4.12'
+    testCompile 'org.hamcrest:hamcrest-library:1.3'
 }

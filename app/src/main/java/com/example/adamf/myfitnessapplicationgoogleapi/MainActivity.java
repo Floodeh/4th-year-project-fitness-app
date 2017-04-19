@@ -171,7 +171,7 @@ View.OnClickListener{
 
 
     public static int walkingTime = 0;
-    public static int stillTime = 0;
+    public static int stillTime = 100;
     public static int runningTime = 0;
     public static int vehicleTime = 0;
 
@@ -274,7 +274,7 @@ View.OnClickListener{
                         if( activity.getConfidence() >= 75 ) {
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Driving?" );
-                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setSmallIcon( R.drawable.driving_icon);
                             builder.setContentTitle( getString( R.string.app_name ) );
                             NotificationManagerCompat.from(this).notify(0, builder.build());
                             vehicleTime = activity.getConfidence();
@@ -286,7 +286,7 @@ View.OnClickListener{
                         if( activity.getConfidence() >= 75 ) {
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Cycling?" );
-                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setSmallIcon( R.drawable.cycling_icon );
                             builder.setContentTitle( getString( R.string.app_name ) );
                             NotificationManagerCompat.from(this).notify(0, builder.build());
                         }
@@ -303,7 +303,7 @@ View.OnClickListener{
 
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Running?" );
-                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setSmallIcon( R.drawable.running_icon );
                             builder.setContentTitle( getString( R.string.app_name ) );
                             NotificationManagerCompat.from(this).notify(0, builder.build());
                         }
@@ -315,7 +315,7 @@ View.OnClickListener{
                         if( activity.getConfidence() >= 75 ) {
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you standing still?");
-                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setSmallIcon( R.drawable.standing_still_icon );
                             builder.setContentTitle( getString( R.string.app_name ) );
                             NotificationManagerCompat.from(this).notify(0, builder.build());
                         }
@@ -331,7 +331,7 @@ View.OnClickListener{
                         if( activity.getConfidence() >= 75 ) {
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you walking?" );
-                            builder.setSmallIcon( R.mipmap.ic_launcher );
+                            builder.setSmallIcon( R.drawable.walking_icon );
                             builder.setContentTitle( getString( R.string.app_name ) );
                             NotificationManagerCompat.from(this).notify(0, builder.build());
                         }
@@ -961,33 +961,35 @@ View.OnClickListener{
     private void weekTimeGraph()
     {
         timeSeventhDay();
-        seventhDayTime = (seventhDayTime / (1000 * 60)) % 60;
+        seventhDayTime = (seventhDayTime / (1000 * 60));
 
         timeSixthDay();
-        sixthDayTime = (sixthDayTime / (1000 * 60)) % 60;
+        sixthDayTime = (sixthDayTime / (1000 * 60));
 
         timeFifthDay();
-        fifthDayTime = (fifthDayTime / (1000 * 60)) % 60;
+        fifthDayTime = (fifthDayTime / (1000 * 60));
 
         timeFourthDay();
-        fourthDayTime = (fourthDayTime / (1000 * 60)) % 60;
+        fourthDayTime = (fourthDayTime / (1000 * 60));
 
         timeThirdDay();
-        thirdDayTime = (thirdDayTime / (1000 * 60)) % 60;
+        thirdDayTime = (thirdDayTime / (1000 * 60));
 
         timeSecondDay();
-        secondDayTime = (secondDayTime / (1000 * 60)) % 60;
+        secondDayTime = (secondDayTime / (1000 * 60));
 
         timeYesterDay();
-        yesterDayTime = (yesterDayTime / (1000 * 60)) % 60;
+        yesterDayTime = (yesterDayTime / (1000 * 60));
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
                 ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart_week_time);
 
+                mCubicValueLineChart.clearChart();
+
                 ValueLineSeries series = new ValueLineSeries();
-                series.setColor(0xFF56B7F1);
+                series.setColor(0xff171515);
 
                 series.addPoint(new ValueLinePoint("", 0));
                 series.addPoint(new ValueLinePoint("Day 7", seventhDayTime));
@@ -1001,6 +1003,7 @@ View.OnClickListener{
 
                 mCubicValueLineChart.addSeries(series);
                 mCubicValueLineChart.startAnimation();
+
             }
         });
     }
@@ -1521,6 +1524,8 @@ View.OnClickListener{
 //                mBarChart.startAnimation();
 
                 ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart);
+
+                mCubicValueLineChart.clearChart();
 
                 ValueLineSeries series = new ValueLineSeries();
                 series.setColor(0xFF56B7F1);
@@ -2116,6 +2121,9 @@ View.OnClickListener{
 //                mBarChart.startAnimation();
 
                 ValueLineChart mValueLineChart = (ValueLineChart) findViewById(R.id.linechart_calories);
+
+                mValueLineChart.clearChart();
+
                 ValueLineSeries series = new ValueLineSeries();
                 series.setColor(0xFF63CBB0);
 
@@ -2671,6 +2679,8 @@ View.OnClickListener{
             public void run() {
                 BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
 
+                mBarChart.clearChart();
+
                 mBarChart.addBar(new BarModel("Day 7", seventhDayRounded, 0xFF123456));
                 mBarChart.addBar(new BarModel("Day 6", sixthDayRounded,  0xFF343456));
                 mBarChart.addBar(new BarModel("Day 5", fifthDayRounded, 0xFF563456));
@@ -2696,14 +2706,12 @@ View.OnClickListener{
             public void run() {
                 PieChart mPieChart = (PieChart) findViewById(R.id.piechart_distance_today);
 
-                mPieChart.addPieSlice(new PieModel("Distance Today", distanceToday,Color.parseColor("#FE6DA8")));
-                mPieChart.addPieSlice(new PieModel("Average Distance", averageDistance,Color.parseColor("#56B7F1")));
-                //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+                mPieChart.clearChart();
+
+                mPieChart.addPieSlice(new PieModel("Distance Today", distanceToday,Color.parseColor("#181c18")));
+                mPieChart.addPieSlice(new PieModel("Average Distance", averageDistance,Color.parseColor("#1cb719")));
 
                 mPieChart.startAnimation();
-
-//                String adam = distanceToday.toString();
-//                int adamVal = Integer.parseInt(adam);
 
                 TextView textView = (TextView) findViewById(R.id.textView_distance);
                 textView.setText(formattedDistance);
@@ -2720,6 +2728,8 @@ View.OnClickListener{
             @Override
             public void run() {
                 PieChart mPieChart = (PieChart) findViewById(R.id.piechart);
+
+                mPieChart.clearChart();
 
                 mPieChart.addPieSlice(new PieModel("Steps Today", stepsToday,Color.parseColor("#FE6DA8")));
                 mPieChart.addPieSlice(new PieModel("Average Steps", averageSteps,Color.parseColor("#56B7F1")));
@@ -2764,6 +2774,8 @@ View.OnClickListener{
 
                 BarChart mBarChart = (BarChart) findViewById(R.id.barchart_calories_today);
 
+                mBarChart.clearChart();
+
                 mBarChart.addBar(new BarModel("Todays Calories", caloriesToday, 0xFF123456));
                 mBarChart.addBar(new BarModel("Average This Week", averageCalories,  0xFF1FF4AC));
 
@@ -2796,9 +2808,11 @@ View.OnClickListener{
 
                 BarChart mBarChart = (BarChart) findViewById(R.id.barchart_lifetime_totals);
 
-                mBarChart.addBar(new BarModel("Total Steps", lifetimeTotalSteps, 0xFF123456));
-                mBarChart.addBar(new BarModel("Total Calories", lifetimeTotalCalories, 0xFF123456));
-                mBarChart.addBar(new BarModel("Total Distance", lifetimeTotalDistance, 0xFF123456));
+                mBarChart.clearChart();
+
+                mBarChart.addBar(new BarModel("Total Steps", lifetimeTotalSteps, 0xFF63CBB0));
+                mBarChart.addBar(new BarModel("Total Calories", lifetimeTotalCalories, 0xFF1BA4E6));
+                mBarChart.addBar(new BarModel("Total Distance", lifetimeTotalDistance, 0xfff88379));
                 mBarChart.addBar(new BarModel("Total Time", lifetimeTotalTime, 0xFF123456));
 
                 mBarChart.startAnimation();
@@ -3507,7 +3521,7 @@ View.OnClickListener{
             Log.w(TAG, "There was a problem getting the time count.");
         }
 
-        timeToday = (timeToday / (1000 * 60)) % 60;
+        timeToday = (timeToday / (1000 * 60));
 
 
         Log.i(TAG, "Total time today: " + timeToday);
