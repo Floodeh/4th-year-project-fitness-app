@@ -561,20 +561,20 @@ View.OnClickListener{
 //        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
 //        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
 //        mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
-        mStartSessionBtn = (Button) findViewById(R.id.btn_start_session);
-        mStopSessionBtn = (Button) findViewById(R.id.btn_stop_session);
-        mInsertSegmentBtn = (Button) findViewById(R.id.btn_insert_segment);
-        mReadSessionBtn = (Button) findViewById(R.id.btn_read_session);
+//        mStartSessionBtn = (Button) findViewById(R.id.btn_start_session);
+//        mStopSessionBtn = (Button) findViewById(R.id.btn_stop_session);
+//        mInsertSegmentBtn = (Button) findViewById(R.id.btn_insert_segment);
+//        mReadSessionBtn = (Button) findViewById(R.id.btn_read_session);
 
 //        mButtonAddSteps.setOnClickListener(this);
 //        mButtonUpdateSteps.setOnClickListener(this);
 //        mButtonDeleteSteps.setOnClickListener(this);
 //        mCancelSubscriptionsBtn.setOnClickListener(this);
 //        mShowSubscriptionsBtn.setOnClickListener(this);
-        mStartSessionBtn.setOnClickListener(this);
-        mStopSessionBtn.setOnClickListener(this);
-        mInsertSegmentBtn.setOnClickListener(this);
-        mReadSessionBtn.setOnClickListener(this);
+//        mStartSessionBtn.setOnClickListener(this);
+//        mStopSessionBtn.setOnClickListener(this);
+//        mInsertSegmentBtn.setOnClickListener(this);
+//        mReadSessionBtn.setOnClickListener(this);
 
 
 
@@ -776,22 +776,22 @@ View.OnClickListener{
 //                showSubscriptions();
 //                break;
 //            }
-            case R.id.btn_start_session: {
-                startSession();
-                break;
-            }
-            case R.id.btn_stop_session: {
-                stopSession();
-                break;
-            }
-            case R.id.btn_insert_segment: {
-                insertSegment();
-                break;
-            }
-            case R.id.btn_read_session: {
-                readSession();
-                break;
-            }
+//            case R.id.btn_start_session: {
+//                startSession();
+//                break;
+//            }
+//            case R.id.btn_stop_session: {
+//                stopSession();
+//                break;
+//            }
+//            case R.id.btn_insert_segment: {
+//                insertSegment();
+//                break;
+//            }
+//            case R.id.btn_read_session: {
+//                readSession();
+//                break;
+//            }
         }
     }
 
@@ -845,12 +845,6 @@ View.OnClickListener{
     public void onDataPoint(DataPoint dataPoint) {
         for (final Field field : dataPoint.getDataType().getFields()) {
             final Value value = dataPoint.getValue(field);
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(getApplicationContext(), "Field: " + field.getName() + " Value: " + value, Toast.LENGTH_SHORT).show();
-                }
-            });
         }
     }
 
@@ -2751,9 +2745,24 @@ View.OnClickListener{
     {
         timeToday();
         final String myText=Integer.toString(timeToday);
+        final int timeTodayTotal = Integer.parseInt(myText);
+
+        //formatting the time and converting from milliseconds to minutes
+        averageTime = (averageTime / (1000 * 60));
+
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+
+                PieChart mPieChart = (PieChart) findViewById(R.id.piechart_time_today);
+
+                mPieChart.clearChart();
+
+                mPieChart.addPieSlice(new PieModel("Time Active Today", timeTodayTotal ,Color.parseColor("#5d5d5d")));
+                mPieChart.addPieSlice(new PieModel("Average Time Active", averageTime,Color.parseColor("#ff8c46")));
+                //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
+
+                mPieChart.startAnimation();
 
                 TextView textView = (TextView) findViewById(R.id.textView_time);
                 textView.setText(myText);

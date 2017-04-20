@@ -47,7 +47,7 @@
 
         <TextView
             android:text="0"
-            android:layout_width="50dp"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/textView_caloriesval"
             android:layout_alignLeft="@+id/textViewTime"
@@ -483,6 +483,26 @@
     </TextView>
 
     <TextView
+        android:id="@+id/time_stats_today"
+        android:text="Today Vs Average"
+        android:layout_width="348dp"
+        android:layout_height="wrap_content"
+        android:textAppearance="@android:style/TextAppearance.Large"
+        android:layout_weight="0.19"
+        android:textAlignment="center">
+    </TextView>
+
+    <org.eazegraph.lib.charts.PieChart
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/piechart_time_today"
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:padding="7dp"
+        app:egLegendTextSize="18sp"
+        app:egUsePieRotation="true"
+        app:egValueTextSize="36sp"/>
+
+    <TextView
         android:id="@+id/time_stats_week"
         android:text="This Week (tap for info)"
         android:layout_width="348dp"
@@ -506,42 +526,42 @@
         app:egIndicatorTextUnit="minutes"/>
 
 
-    <TextView
-        android:id="@+id/unfinished"
-        android:text="Unfinished Development"
-        android:layout_width="348dp"
-        android:layout_height="wrap_content"
-        android:textAppearance="@android:style/TextAppearance.Holo.Large"
-        android:textSize="36sp"
-        android:layout_weight="0.19"
-        android:textAlignment="center"
-        android:paddingTop="50dp">
+    <!--<TextView-->
+        <!--android:id="@+id/unfinished"-->
+        <!--android:text="Unfinished Development"-->
+        <!--android:layout_width="348dp"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:textAppearance="@android:style/TextAppearance.Holo.Large"-->
+        <!--android:textSize="36sp"-->
+        <!--android:layout_weight="0.19"-->
+        <!--android:textAlignment="center"-->
+        <!--android:paddingTop="50dp">-->
 
-    </TextView>
+    <!--</TextView>-->
 
-    <Button
-        android:id="@+id/btn_start_session"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start a Session" />
+    <!--<Button-->
+        <!--android:id="@+id/btn_start_session"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Start a Session" />-->
 
-    <Button
-        android:id="@+id/btn_stop_session"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Stop a Session" />
+    <!--<Button-->
+        <!--android:id="@+id/btn_stop_session"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Stop a Session" />-->
 
-    <Button
-        android:id="@+id/btn_insert_segment"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Insert an Activity Segment " />
+    <!--<Button-->
+        <!--android:id="@+id/btn_insert_segment"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Insert an Activity Segment " />-->
 
-    <Button
-        android:id="@+id/btn_read_session"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Read Sessions" />
+    <!--<Button-->
+        <!--android:id="@+id/btn_read_session"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Read Sessions" />-->
 
 
 
