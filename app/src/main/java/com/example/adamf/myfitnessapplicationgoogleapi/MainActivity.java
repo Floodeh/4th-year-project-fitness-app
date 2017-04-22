@@ -57,7 +57,6 @@ import com.google.android.gms.fitness.result.DataReadResult;
 import com.google.android.gms.fitness.request.DataReadRequest;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.Bucket;
-import android.view.View;
 import com.google.android.gms.fitness.*;
 
 
@@ -78,6 +77,9 @@ GoogleApiClient.ConnectionCallbacks,
 GoogleApiClient.OnConnectionFailedListener{
 
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
+
+    //Below buttons work when uncommented with their respective methods
+
 //    private Button mButtonAddSteps;
 //    private Button mButtonUpdateSteps;
 //    private Button mButtonDeleteSteps;
@@ -90,17 +92,20 @@ GoogleApiClient.OnConnectionFailedListener{
 
 
 
+    //for creating a callback service with data
     private ResultCallback<Status> mSubscribeResultCallback;
-//    private ResultCallback<Status> mCancelSubscriptionResultCallback;
-//    private ResultCallback<ListSubscriptionsResult> mListSubscriptionsResultCallback;
 
+    //Google O auth authentication
     private static final int REQUEST_OAUTH = 1;
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     private GoogleApiClient mApiClient;
+
+    //Tag for debugging
     String TAG = "YOUR-TAG-NAME";
 
 
+    //step variables for creating graphs
     private int seventhDay = 0;
     private int sixthDay = 0;
     private int fifthDay = 0;
@@ -111,6 +116,7 @@ GoogleApiClient.OnConnectionFailedListener{
     private float averageSteps = 0;
     private int lifetimeTotalSteps = 0;
 
+    //time variables for creating graphs
     private int seventhDayTime = 0;
     private int sixthDayTime = 0;
     private int fifthDayTime = 0;
@@ -121,6 +127,7 @@ GoogleApiClient.OnConnectionFailedListener{
     private float averageTime = 0;
     private int lifetimeTotalTime = 0;
 
+    //distance variables for creating graphs
     private float seventhDayDistance = 0;
     private float sixthDayDistance = 0;
     private float fifthDayDistance = 0;
@@ -131,6 +138,7 @@ GoogleApiClient.OnConnectionFailedListener{
     private float averageDistance = 0;
     private float lifetimeTotalDistance = 0;
 
+    //calories variables for creating graphs
     private float seventhDayCalories = 0;
     private float sixthDayCalories = 0;
     private float fifthDayCalories = 0;
@@ -141,20 +149,24 @@ GoogleApiClient.OnConnectionFailedListener{
     private float averageCalories = 0;
     private float lifetimeTotalCalories = 0;
 
+    //today values for each datatype displayed in the application
     private float distanceToday = 0;
     private int timeToday = 0;
     private float caloriesToday = 0;
     private int stepsToday = 0;
 
 
+    //confidence variables to recognise activities
     public static int walkingTime = 0;
-    public static int stillTime = 100;
+    public static int stillTime = 0;
     public static int runningTime = 0;
     public static int vehicleTime = 0;
 
+    //unfinished development for working with sessions API
     private final String SESSION_NAME = "session name";
     private Session mSession;
 
+    //when the application is ran the oncreate method is called
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -164,9 +176,10 @@ GoogleApiClient.OnConnectionFailedListener{
             authInProgress = savedInstanceState.getBoolean(AUTH_PENDING);
         }
 
-        //initViews();
         initCallbacks();
 
+        //building the users data and requesting permissions
+        //invoking each api to be used in the application
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Fitness.SENSORS_API)
                 .addApi(Fitness.HISTORY_API)
@@ -179,11 +192,10 @@ GoogleApiClient.OnConnectionFailedListener{
                 .addScope(new Scope(Scopes.FITNESS_BODY_READ_WRITE))
                 .addConnectionCallbacks(this)
                 .addOnConnectionFailedListener(this)
-                //.enableAutoManage(this, 0, this)
                 .build();
 
+        //self permission check method to check for access fine location permission to be able to work with distance
         int permissionCheck = ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION);
-        //int permissionCheck2 = ContextCompat.checkSelfPermission(this, Manifest.permission.AC)
 
         ActivityCompat.requestPermissions(this,
                 new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
@@ -194,13 +206,11 @@ GoogleApiClient.OnConnectionFailedListener{
                 Manifest.permission.ACCESS_FINE_LOCATION)
                 != PackageManager.PERMISSION_GRANTED) {
 
-            // Should we show an explanation?
+            // Explanation if access denied
             if (ActivityCompat.shouldShowRequestPermissionRationale(this,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
 
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
+                //in this case the user needs to accept permission so an explanation is not needed
 
             } else {
 
@@ -210,19 +220,19 @@ GoogleApiClient.OnConnectionFailedListener{
                         new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
                         MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION);
 
-                // MY_PERMISSIONS_REQUEST_READ_CONTACTS is an
-                // app-defined int constant. The callback method gets the
-                // result of the request.
             }
         }
 
+        //if the permission is granted
         if (permissionCheck == PackageManager.PERMISSION_GRANTED) {
             //Execute location service call if user has explicitly granted ACCESS_FINE_LOCATION..
+            //we can now start recording the distance datatype
             Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
                     .setResultCallback(mSubscribeResultCallback);
         }
     }
 
+    //class to recognise the users activity
     public static class ActivityRecognizedService extends IntentService {
 
         public ActivityRecognizedService() {
@@ -241,12 +251,17 @@ GoogleApiClient.OnConnectionFailedListener{
                 handleDetectedActivities( result.getProbableActivities() );
             }
         }
+        //each different activity detected in the form of cases
         private void handleDetectedActivities(List<DetectedActivity> probableActivities) {
             for( DetectedActivity activity : probableActivities ) {
                 switch( activity.getType() ) {
                     case DetectedActivity.IN_VEHICLE: {
+                        //when the detected activity is driving from the api we enter this method
                         Log.e( "ActivityRecognition", "In Vehicle: " + activity.getConfidence() );
                         if( activity.getConfidence() >= 75 ) {
+                            //if the api is confident that this is the users activity it is given a
+                            //value of over 75. we can then show a push notification to the user
+                            //showing them their current activity along with a custom vehicle icon
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Driving?" );
                             builder.setSmallIcon( R.drawable.driving_icon);
@@ -259,6 +274,9 @@ GoogleApiClient.OnConnectionFailedListener{
                     case DetectedActivity.ON_BICYCLE: {
                         Log.e( "ActivityRecognition", "On Bicycle: " + activity.getConfidence() );
                         if( activity.getConfidence() >= 75 ) {
+                            //if the api is confident that this is the users activity it is given a
+                            //value of over 75. we can then show a push notification to the user
+                            //showing them their current activity along with a custom cycling icon
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Cycling?" );
                             builder.setSmallIcon( R.drawable.cycling_icon );
@@ -275,7 +293,9 @@ GoogleApiClient.OnConnectionFailedListener{
                         Log.e( "ActivityRecognition", "Running: " + activity.getConfidence() );
                         runningTime = activity.getConfidence();
                         if( activity.getConfidence() >= 75 ) {
-
+                            //if the api is confident that this is the users activity it is given a
+                            //value of over 75. we can then show a push notification to the user
+                            //showing them their current activity along with a custom running icon
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you Running?" );
                             builder.setSmallIcon( R.drawable.running_icon );
@@ -288,6 +308,9 @@ GoogleApiClient.OnConnectionFailedListener{
                         Log.e( "ActivityRecognition", "Still: " + activity.getConfidence() );
                         stillTime = activity.getConfidence();
                         if( activity.getConfidence() >= 75 ) {
+                            //if the api is confident that this is the users activity it is given a
+                            //value of over 75. we can then show a push notification to the user
+                            //showing them their current activity along with a custom standing icon
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you standing still?");
                             builder.setSmallIcon( R.drawable.standing_still_icon );
@@ -304,6 +327,9 @@ GoogleApiClient.OnConnectionFailedListener{
                         Log.e( "ActivityRecognition", "Walking: " + activity.getConfidence() );
                         walkingTime = activity.getConfidence();
                         if( activity.getConfidence() >= 75 ) {
+                            //if the api is confident that this is the users activity it is given a
+                            //value of over 75. we can then show a push notification to the user
+                            //showing them their current activity along with a custom walking icon
                             NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
                             builder.setContentText( "Are you walking?" );
                             builder.setSmallIcon( R.drawable.walking_icon );
@@ -322,6 +348,8 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
+    //unfinished developement
+    //user can start and stop a session and statistics will be displayed
     public void startSession() {
         mSession = new Session.Builder()
                 .setName("NewSessionTest")
@@ -348,6 +376,7 @@ GoogleApiClient.OnConnectionFailedListener{
         );
     }
 
+    //when the user stops a session the sessions api method is invoked
     public void stopSession() {
 
         PendingResult<SessionStopResult> pendingResult =
@@ -372,6 +401,7 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //inserting a session into the sessions api
     public void insertSegment() {
         if( !mApiClient.isConnected() ) {
             Toast.makeText(this, "Not connected to Google", Toast.LENGTH_SHORT).show();
@@ -478,6 +508,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
     }
 
+    //invoking the sessions api to display statistics about the sessions that were previously saved
     public void readSession() {
         if( !mApiClient.isConnected() ) {
             Toast.makeText(this, "Not connected to Google", Toast.LENGTH_SHORT).show();
@@ -568,6 +599,7 @@ GoogleApiClient.OnConnectionFailedListener{
 //        };
     }
 
+    //when the app is started the users client is connected
     @Override
     protected void onStart() {
         super.onStart();
@@ -590,12 +622,14 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
+    //save the users authentication
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
         outState.putBoolean(AUTH_PENDING, authInProgress);
     }
 
+    //registering the sensors api to detect movement
     private void registerFitnessDataListener(DataSource dataSource, DataType dataType) {
 
         SensorRequest request = new SensorRequest.Builder()
@@ -615,13 +649,19 @@ GoogleApiClient.OnConnectionFailedListener{
                 });
     }
 
+
+
+    //everytime the application is connected eg unlocked, app opened, phone tilted the onconnected method is invoked
     @Override
     public void onConnected(Bundle bundle) {
 
+        //creating an intent to get the current activity
+        //and set the activity to be the current activity
         Intent intent = new Intent( this, ActivityRecognizedService.class );
         PendingIntent pendingIntent = PendingIntent.getService( this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT );
         ActivityRecognition.ActivityRecognitionApi.requestActivityUpdates( mApiClient, 3000, pendingIntent );
 
+        //creating datasource requests for each datatype
     DataSourcesRequest dataSourceRequest = new DataSourcesRequest.Builder()
                 .setDataTypes(DataType.TYPE_STEP_COUNT_CUMULATIVE)
                 .setDataSourceTypes(DataSource.TYPE_RAW)
@@ -643,6 +683,8 @@ GoogleApiClient.OnConnectionFailedListener{
 
 
 
+        //subscribe to each different datatype we wish to record
+        //distance is not placed here as we need the users permissions first
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_STEP_COUNT_DELTA)
                 .setResultCallback(mSubscribeResultCallback);
         Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_ACTIVITY_SEGMENT)
@@ -653,6 +695,8 @@ GoogleApiClient.OnConnectionFailedListener{
                 .setResultCallback(mSubscribeResultCallback);
 
 
+        //beginnning of asynchronous tasks
+        //each task retrieves data from the cloud and runs concurrently with each other to minimise wait time
         new FetchStepsAsync().execute();
         new ViewLifetimeTotalCountGraphTask().execute();
         new ViewWeekStepCountGraphTask().execute();
@@ -665,6 +709,7 @@ GoogleApiClient.OnConnectionFailedListener{
         new ViewTodaysStepCountGraphTask().execute();
 
 
+        //creating a result callback with a constant count (only needed for steps and calories)
         ResultCallback<DataSourcesResult> dataSourcesResultCallback = new ResultCallback<DataSourcesResult>() {
             @Override
             public void onResult(DataSourcesResult dataSourcesResult) {
@@ -689,6 +734,7 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         };
 
+        //assigning sensors apis to detect movement
         Fitness.SensorsApi.findDataSources(mApiClient, dataSourceRequest)
                 .setResultCallback(dataSourcesResultCallback);
 
@@ -701,7 +747,7 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
-
+//uncomment methods to see how they work
 //    private void showSubscriptions() {
 //        Fitness.RecordingApi.listSubscriptions(mApiClient)
 //                .setResultCallback(mListSubscriptionsResultCallback);
@@ -712,12 +758,14 @@ GoogleApiClient.OnConnectionFailedListener{
 //                .setResultCallback(mCancelSubscriptionResultCallback);
 //    }
 
+    //when connection is lost display a reason why
     @Override
     public void onConnectionSuspended(int i) {
         Log.e("HistoryAPI", "onConnectionSuspended");
 
     }
 
+    //when the authentication failed for the google fit api
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         if (!authInProgress) {
@@ -732,13 +780,16 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //when the user approves the application and connects
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_OAUTH) {
             authInProgress = false;
+            //auth in progress is no longer true as the user is no approved
             if (resultCode == RESULT_OK) {
                 if (!mApiClient.isConnecting() && !mApiClient.isConnected()) {
                     mApiClient.connect();
+                    //connect the user
                 }
             } else if (resultCode == RESULT_CANCELED) {
                 Log.e("GoogleFit", "RESULT_CANCELED");
@@ -748,6 +799,7 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //upon detected movement assign the value to the value variable
     @Override
     public void onDataPoint(DataPoint dataPoint) {
         for (final Field field : dataPoint.getDataType().getFields()) {
@@ -756,6 +808,7 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
+    //async class to add default weight
     private class AddWeight extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             addWeightDataToGoogleFit();
@@ -763,6 +816,7 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to add default height
     private class AddHeight extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             addHeightDataToGoogleFit();
@@ -771,6 +825,8 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
+    //async class to view the weeks steps graph
+    //calls another method that performs the graph build
     private class ViewWeekStepCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             weekStepsGraph();
@@ -778,12 +834,17 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view the distance steps graph
+    //calls another method that performs the graph build
     private class ViewWeekDistanceCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             weekDistanceGraph();
             return null;
         }
     }
+
+    //async class to view the weeks calories graph
+    //calls another method that performs the graph build
     private class ViewWeekCaloriesCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             weekCaloriesGraph();
@@ -791,6 +852,8 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view the weeks time graph
+    //calls another method that performs the graph build
     private class ViewWeekTimeCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             weekTimeGraph();
@@ -798,6 +861,8 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view todays distance graph
+    //calls another method that performs the graph build
     private class ViewTodaysDistanceCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayDistanceGraph();
@@ -805,6 +870,8 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view todays steps graph
+    //calls another method that performs the graph build
     private class ViewTodaysStepCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayStepsGraph();
@@ -812,6 +879,8 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view todays time graph
+    //calls another method that performs the graph build
     private class ViewTodaysTimeCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayTimeGraph();
@@ -819,6 +888,8 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view todays calories graph
+    //calls another method that performs the graph build
     private class ViewTodaysCalorieCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             todayCaloriesGraph();
@@ -826,6 +897,8 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //async class to view lifetime total statistics
+    //calls another method that performs the graph build
     private class ViewLifetimeTotalCountGraphTask extends AsyncTask<Void, Void, Void> {
         protected Void doInBackground(Void... params) {
             lifetimeTotalGraph();
@@ -835,6 +908,8 @@ GoogleApiClient.OnConnectionFailedListener{
 
 
 
+    //to view these functions uncomment them
+    //allows the user to add update and delete steps
 //    private class AddStepsToGoogleFitTask extends AsyncTask<Void, Void, Void> {
 //        protected Void doInBackground(Void... params) {
 //            addStepDataToGoogleFit();
@@ -859,34 +934,31 @@ GoogleApiClient.OnConnectionFailedListener{
 //        }
 //    }
 
+    //graph of this weeks time spent active
     private void weekTimeGraph()
     {
-        timeSeventhDay();
-        seventhDayTime = (seventhDayTime / (1000 * 60));
-
-        timeSixthDay();
-        sixthDayTime = (sixthDayTime / (1000 * 60));
-
-        timeFifthDay();
-        fifthDayTime = (fifthDayTime / (1000 * 60));
-
-        timeFourthDay();
-        fourthDayTime = (fourthDayTime / (1000 * 60));
-
-        timeThirdDay();
-        thirdDayTime = (thirdDayTime / (1000 * 60));
-
-        timeSecondDay();
-        secondDayTime = (secondDayTime / (1000 * 60));
-
+        //to retrieve the last 7 days data, the data is returned in "buckets", unfortunately you can not retrieve data from a specific day
+        //So the work around I implemented was to create mutliple methods for each of the seven days.
+        //timeSeventhDay retrieves the value of time for the last 7 days combined. So I needed to then subtract each other day from it
+        //so that the only value i was left with was the actual value for the seventh day and not the other 6 days.
+        //the same was done for each other day by subtracting the previous days
         timeYesterDay();
-        yesterDayTime = (yesterDayTime / (1000 * 60));
+        timeSecondDay();
+        timeThirdDay();
+        timeFourthDay();
+        timeFifthDay();
+        timeSixthDay();
+        timeSeventhDay();
+
+        //run on ui thread method that creates the graph of this weeks time
 
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
+                //graph is created using the EazeGraph library
                 ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart_week_time);
 
+                //chart is cleared before adding data to it
                 mCubicValueLineChart.clearChart();
 
                 ValueLineSeries series = new ValueLineSeries();
@@ -909,6 +981,7 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //retrieves data from installation for time
     private void timeLifetimeTotal() {
 
         Calendar cal1 = Calendar.getInstance();
@@ -945,7 +1018,9 @@ GoogleApiClient.OnConnectionFailedListener{
                 for (DataSet dataSet : dataSets) {
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
+                            //for every field that is called duration
                             if (field.getName().equals("duration")) {
+                                //add the value to the lifetimetotal variable
                                 lifetimeTotalTime += dp.getValue(field).asInt();
                                 Log.d(TAG, "Lifetime Total Time: " + lifetimeTotalTime);
                             }
@@ -1006,7 +1081,7 @@ GoogleApiClient.OnConnectionFailedListener{
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("duration")) {
                                 seventhDayTime += dp.getValue(field).asInt();
-                                Log.d(TAG, "Seventh day: " + seventhDayTime);
+                                Log.d(TAG, "Seventh day Time : " + seventhDayTime);
                             }
                         }
                     }
@@ -1024,7 +1099,14 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        //getting the average time for the week
         averageTime = seventhDayTime / 7;
+        //formatting the time and converting from milliseconds to minutes
+        averageTime = (averageTime / 1000) / 60;
+
+        //formatting time from milliseconds to minutes
+        seventhDayTime = (seventhDayTime / (1000 * 60));
+        //subtracting each day from seventh day to leave only the value on the seventh day
         seventhDayTime = seventhDayTime - sixthDayTime - fifthDayTime - fourthDayTime - thirdDayTime - secondDayTime - yesterDayTime;
 
     }
@@ -1069,7 +1151,7 @@ GoogleApiClient.OnConnectionFailedListener{
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("duration")) {
                                 sixthDayTime += dp.getValue(field).asInt();
-                                Log.d(TAG, "Sixth day: " + sixthDayTime);
+                                Log.d(TAG, "Sixth day time: " + sixthDayTime);
                             }
                         }
                     }
@@ -1087,6 +1169,8 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        sixthDayTime = (sixthDayTime / (1000 * 60));
+        //subtracting each day from sixth day to leave only the value on the sixth day
         sixthDayTime = sixthDayTime - fifthDayTime - fourthDayTime - thirdDayTime - secondDayTime - yesterDayTime;
 
     }
@@ -1149,6 +1233,8 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        fifthDayTime = (fifthDayTime / (1000 * 60));
+        //subtracting each day from fifth day to leave only the value on the fifth day
         fifthDayTime = fifthDayTime - fourthDayTime - thirdDayTime - secondDayTime - yesterDayTime;
 
     }
@@ -1211,6 +1297,8 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        fourthDayTime = (fourthDayTime / (1000 * 60));
+        //subtracting each day from fourth day to leave only the value on the fourth day
         fourthDayTime = fourthDayTime - thirdDayTime - secondDayTime - yesterDayTime;
 
     }
@@ -1273,6 +1361,8 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        thirdDayTime = (thirdDayTime / (1000 * 60));
+        //subtracting each day from third day to leave only the value on the third day
         thirdDayTime = thirdDayTime - secondDayTime - yesterDayTime;
 
     }
@@ -1335,6 +1425,8 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        secondDayTime = (secondDayTime / (1000 * 60));
+        //subtracting each day from second day to leave only the value on the second day
         secondDayTime = secondDayTime - yesterDayTime;
 
     }
@@ -1397,8 +1489,12 @@ GoogleApiClient.OnConnectionFailedListener{
             }
         }
 
+        yesterDayTime = (yesterDayTime / (1000 * 60));
+        //no need for subtraction
+
     }
 
+    //The same concept is applied as before with the week time graph
     private void weekStepsGraph()
     {
         stepsYesterday();
@@ -1411,18 +1507,6 @@ GoogleApiClient.OnConnectionFailedListener{
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-//                BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
-//
-//
-//                mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
-//                mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
-//                mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
-//                mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
-//                mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
-//                mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
-//                mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
-//
-//                mBarChart.startAnimation();
 
                 ValueLineChart mCubicValueLineChart = (ValueLineChart) findViewById(R.id.cubiclinechart);
 
@@ -1447,8 +1531,8 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //lifetime total steps
     private void stepsLifetimeTotal() {
-        //1 week ago
         Calendar cal1 = Calendar.getInstance();
         Date now1 = new Date();
         cal1.setTime(now1);
@@ -1477,7 +1561,7 @@ GoogleApiClient.OnConnectionFailedListener{
         DataReadResult dataReadResult1 = Fitness.HistoryApi.readData(mApiClient, readRequest1).await(1, TimeUnit.MINUTES);
 
 
-        //THIS IS FOR SEVEN DAYS AGO
+        //THIS IS FOR ALL TIME
         if (dataReadResult1.getBuckets().size() > 0) {
             Log.e("History", "Number of buckets: " + dataReadResult1.getBuckets().size());
             for (Bucket bucket : dataReadResult1.getBuckets()) {
@@ -1544,10 +1628,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1611,10 +1691,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1676,10 +1752,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1742,10 +1814,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1808,10 +1876,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1874,10 +1938,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1940,10 +2000,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("steps")) {
@@ -1970,6 +2026,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
     }
 
+    //same concept is applied as before the weeks values
     private void weekCaloriesGraph()
     {
         caloriesYesterDay();
@@ -1979,6 +2036,8 @@ GoogleApiClient.OnConnectionFailedListener{
         caloriesFifthDay();
         caloriesSixthDay();
         caloriesSeventhDay();
+
+        //formatting each calories variable correct to one decimal place
         final DecimalFormat df = new DecimalFormat("#.");
         final String formattedSeventhDay = df.format(seventhDayCalories);
         final float seventhDayRounded = Float.parseFloat(formattedSeventhDay);
@@ -2009,17 +2068,6 @@ GoogleApiClient.OnConnectionFailedListener{
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-//                BarChart mBarChart = (BarChart) findViewById(R.id.barchart_calories);
-//
-//                mBarChart.addBar(new BarModel("Day 7", seventhDayRounded, 0xFF123456));
-//                mBarChart.addBar(new BarModel("Day 6", sixthDayRounded,  0xFF343456));
-//                mBarChart.addBar(new BarModel("Day 5", fifthDayRounded, 0xFF563456));
-//                mBarChart.addBar(new BarModel("Day 4", fourthDayRounded, 0xFF873F56));
-//                mBarChart.addBar(new BarModel("Day 3", thirdDayRounded, 0xFF56B7F1));
-//                mBarChart.addBar(new BarModel("Day 2", secondDayRounded,  0xFF343456));
-//                mBarChart.addBar(new BarModel("Day 1", yesterDayRounded, 0xFF1FF4AC));
-//
-//                mBarChart.startAnimation();
 
                 ValueLineChart mValueLineChart = (ValueLineChart) findViewById(R.id.linechart_calories);
 
@@ -2539,6 +2587,7 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
+    //same concept is applied as before with the weekend graphs
     private void weekDistanceGraph()
     {
         distanceYesterday();
@@ -2596,10 +2645,12 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+
+    //for displaying data for today we can make a call to another method that does not deal
+    //with buckets, there is a function called readDailyTotal which is used to retrieve the value for today
     private void todayDistanceGraph()
     {
         distanceToday();
-        //final String myText=Float.toString(distanceToday);
         final DecimalFormat df = new DecimalFormat("#.0");
         final String formattedDistance = df.format(distanceToday);
         runOnUiThread(new Runnable() {
@@ -2614,6 +2665,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
                 mPieChart.startAnimation();
 
+                //updating the text view at the top of the application
                 TextView textView = (TextView) findViewById(R.id.textView_distance);
                 textView.setText(formattedDistance);
 
@@ -2621,6 +2673,7 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //same concept as other today graphs
     private void todayStepsGraph()
     {
         stepsToday();
@@ -2634,12 +2687,8 @@ GoogleApiClient.OnConnectionFailedListener{
 
                 mPieChart.addPieSlice(new PieModel("Steps Today", stepsToday,Color.parseColor("#FE6DA8")));
                 mPieChart.addPieSlice(new PieModel("Average Steps", averageSteps,Color.parseColor("#56B7F1")));
-                //mPieChart.addPieSlice(new PieModel("Goal", 10000, Color.parseColor("#56B7F1")));
 
                 mPieChart.startAnimation();
-
-//                String adam = distanceToday.toString();
-//                int adamVal = Integer.parseInt(adam);
 
                 TextView textView = (TextView) findViewById(R.id.textView_stepsval);
                 textView.setText(stepToday);
@@ -2648,14 +2697,14 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //same concept as other time graphs
     private void todayTimeGraph()
     {
         timeToday();
+
         final String myText=Integer.toString(timeToday);
         final int timeTodayTotal = Integer.parseInt(myText);
 
-        //formatting the time and converting from milliseconds to minutes
-        averageTime = (averageTime / (1000 * 60));
 
         runOnUiThread(new Runnable() {
             @Override
@@ -2671,6 +2720,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
                 mPieChart.startAnimation();
 
+                //updating the text view at the top of the app
                 TextView textView = (TextView) findViewById(R.id.textView_time);
                 textView.setText(myText);
 
@@ -2678,6 +2728,7 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //same concept as before with other today graphs
     private void todayCaloriesGraph()
     {
         caloriesToday();
@@ -2697,6 +2748,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
                 mBarChart.startAnimation();
 
+                //updating the text view at the top of the application
                 TextView textView = (TextView) findViewById(R.id.textView_caloriesval);
                 textView.setText(formattedCalories);
 
@@ -2704,15 +2756,18 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //life timetotal graph along with updating the life time total value text views
     private void lifetimeTotalGraph()
     {
         stepsLifetimeTotal();
         caloriesLifetimeTotal();
         distanceLifetimeTotal();
         timeLifetimeTotal();
+
         //Conversion of milliseconds to minutes
         lifetimeTotalTime = (lifetimeTotalTime / (1000 * 60));
 
+        //converting float values to a string to update a text view
         final String lifetimeTotalCalTv = Float.toString(lifetimeTotalCalories);
         final String lifetimeTotalDisTv = Float.toString(lifetimeTotalDistance);
         final String lifetimeTotalStepTv = Float.toString(lifetimeTotalSteps);
@@ -2733,6 +2788,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
                 mBarChart.startAnimation();
 
+                //update each text view
                 TextView textView = (TextView) findViewById(R.id.textView_lifetime_calories);
                 textView.setText(lifetimeTotalCalTv);
                 TextView textView1 = (TextView) findViewById(R.id.textView_lifetime_distance);
@@ -2746,6 +2802,7 @@ GoogleApiClient.OnConnectionFailedListener{
         });
     }
 
+    //lifetime totals for distance
     private void distanceLifetimeTotal() {
         //1 week ago
         Calendar cal1 = Calendar.getInstance();
@@ -2911,10 +2968,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("distance")) {
@@ -2976,10 +3029,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("distance")) {
@@ -3042,10 +3091,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("distance")) {
@@ -3109,10 +3154,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("distance")) {
@@ -3175,10 +3216,6 @@ GoogleApiClient.OnConnectionFailedListener{
             for (Bucket bucket : dataReadResult1.getBuckets()) {
                 List<DataSet> dataSets = bucket.getDataSets();
                 for (DataSet dataSet : dataSets) {
-                    //showDataSet(dataSet);
-                    //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_DISTANCE_DELTA ).await(1, TimeUnit.MINUTES);
-                    //String adam = adamDp.getValue(adamField).toString();
-                    //final int adamflood = Integer.parseInt(adam);
                     for (DataPoint dp : dataSet.getDataPoints()) {
                         for (Field field : dp.getDataType().getFields()) {
                             if (field.getName().equals("distance")) {
@@ -3269,6 +3306,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
 
 
+    //used for testing to view different data sets to see if data retrieval was successful
     private void showDataSet(DataSet dataSet) {
         Log.e("History", "Data returned for Data type: " + dataSet.getDataType().getName());
         final DateFormat dateFormat = DateFormat.getDateInstance();
@@ -3285,23 +3323,11 @@ GoogleApiClient.OnConnectionFailedListener{
 
                 final DataPoint adamDp = dp;
                 final Field adamField = field;
-                //DailyTotalResult result = Fitness.HistoryApi.readDailyTotal( mApiClient, DataType.TYPE_STEP_COUNT_DELTA ).await(1, TimeUnit.MINUTES);
-                //String adam = adamDp.getValue(adamField).toString();
-                //final int adamflood = Integer.parseInt(adam);
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-//                        BarChart mBarChart = (BarChart) findViewById(R.id.barchart);
-//
-//                        mBarChart.addBar(new BarModel(seventhDay, 0xFF123456));
-//                        mBarChart.addBar(new BarModel(sixthDay,  0xFF343456));
-//                        mBarChart.addBar(new BarModel(fifthDay, 0xFF563456));
-//                        mBarChart.addBar(new BarModel(fourthDay, 0xFF873F56));
-//                        mBarChart.addBar(new BarModel(thirdDay, 0xFF56B7F1));
-//                        mBarChart.addBar(new BarModel(secondDay,  0xFF343456));
-//                        mBarChart.addBar(new BarModel(yesterDay, 0xFF1FF4AC));
-//
-//                        mBarChart.startAnimation();
+
                         Toast.makeText(getApplicationContext(), "History for: " + adamField.getName() + "\t\tStart: " + dateFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getStartTime(TimeUnit.MILLISECONDS)) + "\t\tEnd: " + dateFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + " " + timeFormat.format(adamDp.getEndTime(TimeUnit.MILLISECONDS)) + "\tValue: " + adamDp.getValue(adamField), Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -3313,12 +3339,15 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
+    //today graph methods
     private void distanceToday()
     {
         //today
         //RESETTING VARIABLES TO ZERO
         distanceToday = 0;
 
+        //utilising the readdailytotal method from the google fit api and passing in the data type
+        //that we want to view data for
         PendingResult<DailyTotalResult> result1 = Fitness.HistoryApi.readDailyTotal(mApiClient, DataType.TYPE_DISTANCE_DELTA);
         DailyTotalResult totalResult = result1.await(30, TimeUnit.SECONDS);
         if (totalResult.getStatus().isSuccess()) {
@@ -3405,6 +3434,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
 
 
+    //to pass in specific data to the api
     private DataSet createDataForRequest(DataType dataType, int dataSourceType, Object values,
                                          long startTime, long endTime, TimeUnit timeUnit) {
         DataSource dataSource = new DataSource.Builder()
@@ -3428,6 +3458,7 @@ GoogleApiClient.OnConnectionFailedListener{
         return dataSet;
     }
 
+    //adding average weight for a person
     private void addWeightDataToGoogleFit() {
         //Adds weight spread out evenly from start time to end time
         Calendar cal = Calendar.getInstance();
@@ -3455,6 +3486,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
     }
 
+    //adding average height for a person
     private void addHeightDataToGoogleFit() {
         //Adds height spread out evenly from start time to end time
         Calendar cal = Calendar.getInstance();
@@ -3482,6 +3514,7 @@ GoogleApiClient.OnConnectionFailedListener{
 
     }
 
+    //method to add steps to the api
     private void addStepDataToGoogleFit() {
         //Adds steps spread out evenly from start time to end time
         Calendar cal = Calendar.getInstance();
@@ -3515,6 +3548,7 @@ GoogleApiClient.OnConnectionFailedListener{
         }
     }
 
+    //method to update steps for a particular day
     private void updateStepDataOnGoogleFit() {
         //If two entries overlap, the new data is dropped when trying to insert. Instead, you need to use update
         Calendar cal = Calendar.getInstance();
@@ -3543,6 +3577,7 @@ GoogleApiClient.OnConnectionFailedListener{
         Fitness.HistoryApi.updateData(mApiClient, updateRequest).await(1, TimeUnit.MINUTES);
     }
 
+    //method to delete steps for a particular day
 //    private void deleteStepDataOnGoogleFit() {
 //        Calendar cal = Calendar.getInstance();
 //        Date now = new Date();
@@ -3589,7 +3624,7 @@ GoogleApiClient.OnConnectionFailedListener{
     }
 
 
-
+//shows the users subscriptions to different datatypes
 //    public void subscribe() {
 //        // To create a subscription, invoke the Recording API. As soon as the subscription is
 //        // active, fitness data will start recording.
