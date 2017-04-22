@@ -1,5 +1,7 @@
 <resources>
     <string name="app_name">My Fitness Tracker</string>
+    <string name="textViewDistance">Distance</string>
+    <string name="textViewTime">Time(m)</string>
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
@@ -11,4 +13,20 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="steps">Steps</string>
+    <string name="calories">Calories</string>
+    <string name="lifetime_totals">Lifetime Totals</string>
+    <string name="chart_view_of_totals">Chart View Of Totals</string>
+    <string name="calories_stats">Calories</string>
+    <string name="today_vs_average">Today Vs Average</string>
+    <string name="this_week_tap_for_info">This Week (tap for info)</string>
+    <string name="steps_stats">Steps</string>
+    <string name="today_vs_average_steps">Today Vs Average</string>
+    <string name="this_week_tap_for_info_Steps">This Week (tap for info)</string>
+    <string name="distance_stats">Distance</string>
+    <string name="today_vs_average_distance">Today Vs Average</string>
+    <string name="this_week_distance">This Week</string>
+    <string name="time_active_stats">Time Active</string>
+    <string name="today_vs_average_time">Today Vs Average</string>
+    <string name="this_week_tap_for_info_time">This Week (tap for info)</string>
 </resources>

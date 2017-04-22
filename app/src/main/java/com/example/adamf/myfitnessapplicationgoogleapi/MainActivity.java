@@ -4,15 +4,10 @@ import android.Manifest;
 import android.app.IntentService;
 import android.app.PendingIntent;
 import android.content.pm.PackageManager;
-import android.content.res.Resources;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.os.AsyncTask;
 import android.content.Intent;
 import android.content.IntentSender;
-import android.nfc.Tag;
-import android.provider.ContactsContract;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.NotificationCompat;
@@ -21,16 +16,11 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import java.text.DateFormat;
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -38,19 +28,15 @@ import java.util.concurrent.TimeUnit;
 
 import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.fitness.data.Session;
-import com.google.android.gms.fitness.data.Subscription;
-import com.google.android.gms.fitness.request.DataDeleteRequest;
 import com.google.android.gms.fitness.request.DataUpdateRequest;
 import com.google.android.gms.fitness.request.SessionInsertRequest;
 import com.google.android.gms.fitness.request.SessionReadRequest;
 import com.google.android.gms.fitness.result.DailyTotalResult;
-import com.google.android.gms.fitness.result.ListSubscriptionsResult;
 import com.google.android.gms.fitness.result.SessionReadResult;
 import com.google.android.gms.fitness.result.SessionStopResult;
 import com.google.android.gms.location.ActivityRecognition;
 import com.google.android.gms.location.ActivityRecognitionResult;
 import com.google.android.gms.location.DetectedActivity;
-import com.microsoft.windowsazure.mobileservices.*;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.Scopes;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -72,12 +58,7 @@ import com.google.android.gms.fitness.request.DataReadRequest;
 import com.google.android.gms.fitness.data.DataSet;
 import com.google.android.gms.fitness.data.Bucket;
 import android.view.View;
-import android.widget.Button;
-import android.view.View.OnClickListener;
 import com.google.android.gms.fitness.*;
-import com.google.android.gms.fitness.Fitness.*;
-import com.txusballesteros.widgets.FitChart;
-import com.txusballesteros.widgets.FitChartValue;
 
 
 import org.eazegraph.lib.charts.BarChart;
@@ -88,15 +69,13 @@ import org.eazegraph.lib.models.PieModel;
 import org.eazegraph.lib.models.ValueLinePoint;
 import org.eazegraph.lib.models.ValueLineSeries;
 
-import java.util.concurrent.TimeUnit;
 
 import static com.google.android.gms.fitness.data.Field.FIELD_STEPS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 public class MainActivity extends AppCompatActivity implements OnDataPointListener,
 GoogleApiClient.ConnectionCallbacks,
-GoogleApiClient.OnConnectionFailedListener,
-View.OnClickListener{
+GoogleApiClient.OnConnectionFailedListener{
 
     private static final int MY_PERMISSIONS_REQUEST_ACCESS_FINE_LOCATION = 0;
 //    private Button mButtonAddSteps;
@@ -104,10 +83,10 @@ View.OnClickListener{
 //    private Button mButtonDeleteSteps;
 //    private Button mCancelSubscriptionsBtn;
 //    private Button mShowSubscriptionsBtn;
-    private Button mStartSessionBtn;
-    private Button mStopSessionBtn;
-    private Button mInsertSegmentBtn;
-    private Button mReadSessionBtn;
+//    private Button mStartSessionBtn;
+//    private Button mStopSessionBtn;
+//    private Button mInsertSegmentBtn;
+//    private Button mReadSessionBtn;
 
 
 
@@ -115,13 +94,11 @@ View.OnClickListener{
 //    private ResultCallback<Status> mCancelSubscriptionResultCallback;
 //    private ResultCallback<ListSubscriptionsResult> mListSubscriptionsResultCallback;
 
-    private MobileServiceClient mClient;
     private static final int REQUEST_OAUTH = 1;
     private static final String AUTH_PENDING = "auth_state_pending";
     private boolean authInProgress = false;
     private GoogleApiClient mApiClient;
     String TAG = "YOUR-TAG-NAME";
-    private static final String KEY_ = "AIzaSyBo-K-NkIn7edBi1DZckt4Xmb4qkfPJrRw";
 
 
     private int seventhDay = 0;
@@ -244,8 +221,6 @@ View.OnClickListener{
             Fitness.RecordingApi.subscribe(mApiClient, DataType.TYPE_DISTANCE_DELTA)
                     .setResultCallback(mSubscribeResultCallback);
         }
-
-        initViews();
     }
 
     public static class ActivityRecognizedService extends IntentService {
@@ -553,33 +528,6 @@ View.OnClickListener{
         });
     }
 
-
-    private void initViews() {
-
-//        mCancelSubscriptionsBtn = (Button) findViewById(R.id.btn_cancel_subscriptions);
-//        mShowSubscriptionsBtn = (Button) findViewById(R.id.btn_show_subscriptions);
-//        mButtonAddSteps = (Button) findViewById(R.id.btn_add_steps);
-//        mButtonUpdateSteps = (Button) findViewById(R.id.btn_update_steps);
-//        mButtonDeleteSteps = (Button) findViewById(R.id.btn_delete_steps);
-//        mStartSessionBtn = (Button) findViewById(R.id.btn_start_session);
-//        mStopSessionBtn = (Button) findViewById(R.id.btn_stop_session);
-//        mInsertSegmentBtn = (Button) findViewById(R.id.btn_insert_segment);
-//        mReadSessionBtn = (Button) findViewById(R.id.btn_read_session);
-
-//        mButtonAddSteps.setOnClickListener(this);
-//        mButtonUpdateSteps.setOnClickListener(this);
-//        mButtonDeleteSteps.setOnClickListener(this);
-//        mCancelSubscriptionsBtn.setOnClickListener(this);
-//        mShowSubscriptionsBtn.setOnClickListener(this);
-//        mStartSessionBtn.setOnClickListener(this);
-//        mStopSessionBtn.setOnClickListener(this);
-//        mInsertSegmentBtn.setOnClickListener(this);
-//        mReadSessionBtn.setOnClickListener(this);
-
-
-
-    }
-
     private void initCallbacks() {
         mSubscribeResultCallback = new ResultCallback<Status>() {
             @Override
@@ -753,47 +701,6 @@ View.OnClickListener{
     }
 
 
-    @Override
-    public void onClick(View v) {
-        switch(v.getId()) {
-//            case R.id.btn_add_steps: {
-//                new AddStepsToGoogleFitTask().execute();
-//                break;
-//            }
-//            case R.id.btn_update_steps: {
-//                new UpdateStepsOnGoogleFitTask().execute();
-//                break;
-//            }
-//            case R.id.btn_delete_steps: {
-//                new DeleteYesterdaysStepsTask().execute();
-//                break;
-//            }
-//            case R.id.btn_cancel_subscriptions: {
-//                cancelSubscriptions();
-//                break;
-//            }
-//            case R.id.btn_show_subscriptions: {
-//                showSubscriptions();
-//                break;
-//            }
-//            case R.id.btn_start_session: {
-//                startSession();
-//                break;
-//            }
-//            case R.id.btn_stop_session: {
-//                stopSession();
-//                break;
-//            }
-//            case R.id.btn_insert_segment: {
-//                insertSegment();
-//                break;
-//            }
-//            case R.id.btn_read_session: {
-//                readSession();
-//                break;
-//            }
-        }
-    }
 
 //    private void showSubscriptions() {
 //        Fitness.RecordingApi.listSubscriptions(mApiClient)
@@ -3361,47 +3268,6 @@ View.OnClickListener{
     }
 
 
-    private void displayLastWeeksTimeData() {
-        Calendar cal = Calendar.getInstance();
-        Date now = new Date();
-        cal.setTime(now);
-        long endTime = cal.getTimeInMillis();
-        cal.add(Calendar.WEEK_OF_YEAR, -1);
-        long startTime = cal.getTimeInMillis();
-
-        java.text.DateFormat dateFormat = DateFormat.getDateInstance();
-        Log.e("History", "Range Start: " + dateFormat.format(startTime));
-        Log.e("History", "Range End: " + dateFormat.format(endTime));
-
-
-        //Check how much time was spent active in the last 7 days
-        DataReadRequest readRequest = new DataReadRequest.Builder()
-                .aggregate(DataType.TYPE_ACTIVITY_SEGMENT, DataType.AGGREGATE_ACTIVITY_SUMMARY)
-                .bucketByTime(1, TimeUnit.DAYS)
-                .setTimeRange(startTime, endTime, TimeUnit.MILLISECONDS)
-                .build();
-
-        DataReadResult dataReadResult = Fitness.HistoryApi.readData(mApiClient, readRequest).await(1, TimeUnit.MINUTES);
-
-        //Used for aggregated data
-        if (dataReadResult.getBuckets().size() > 0) {
-            Log.e("History", "Number of buckets: " + dataReadResult.getBuckets().size());
-            for (Bucket bucket : dataReadResult.getBuckets()) {
-                List<DataSet> dataSets = bucket.getDataSets();
-                for (DataSet dataSet : dataSets) {
-                    showDataSet(dataSet);
-                }
-            }
-        }
-        //Used for non-aggregated data
-        else if (dataReadResult.getDataSets().size() > 0) {
-            Log.e("History", "Number of returned DataSets: " + dataReadResult.getDataSets().size());
-            for (DataSet dataSet : dataReadResult.getDataSets()) {
-                showDataSet(dataSet);
-            }
-        }
-
-    }
 
     private void showDataSet(DataSet dataSet) {
         Log.e("History", "Data returned for Data type: " + dataSet.getDataType().getName());
@@ -3582,8 +3448,7 @@ View.OnClickListener{
                 TimeUnit.MILLISECONDS
         );
 
-        com.google.android.gms.common.api.Status weightInsertStatus =
-                Fitness.HistoryApi.insertData(mApiClient, weightDataSet)
+        Fitness.HistoryApi.insertData(mApiClient, weightDataSet)
                         .await(1, TimeUnit.MINUTES);
 
         Log.e( "History", "data inserted" + weight );
@@ -3610,8 +3475,7 @@ View.OnClickListener{
                 TimeUnit.MILLISECONDS
         );
 
-        com.google.android.gms.common.api.Status heightInsertStatus =
-                Fitness.HistoryApi.insertData(mApiClient, heightDataSet)
+        Fitness.HistoryApi.insertData(mApiClient, heightDataSet)
                         .await(1, TimeUnit.MINUTES);
 
         Log.e( "History", "data inserted" + height );
@@ -3720,13 +3584,6 @@ View.OnClickListener{
         @Override
         protected void onPostExecute(final Long aLong) {
             super.onPostExecute(aLong);
-
-            //Total steps covered for that day
-            Log.i(TAG, "Total steps: " + aLong);
-
-
-            String adam = aLong.toString();
-            int adamVal = Integer.parseInt(adam);
 
         }
     }

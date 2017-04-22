@@ -2,12 +2,6 @@ package com.example.adamf.myfitnessapplicationgoogleapi;
 
 import org.junit.Test;
 import static org.junit.Assert.*;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.experimental.runners.Enclosed;
-import org.junit.runner.RunWith;
-
-import com.example.adamf.myfitnessapplicationgoogleapi.MainActivity;
 
 /**
  * Example local unit test, which will execute on the development machine (host).

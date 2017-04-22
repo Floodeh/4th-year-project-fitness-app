@@ -34,7 +34,7 @@
         android:layout_alignWithParentIfMissing="false" />
 
         <TextView
-            android:text="Distance"
+            android:text="@string/textViewDistance"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true"
@@ -46,7 +46,7 @@
 
 
         <TextView
-            android:text="0"
+            android:text=""
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_alignBottom="@+id/textView_caloriesval"
@@ -57,7 +57,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
 
         <TextView
-            android:text="Time(m)"
+            android:text="@string/textViewTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewTime"
@@ -71,7 +71,7 @@
             android:textSize="18sp" />
 
         <TextView
-            android:text="0"
+            android:text=""
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textView_stepsval"
@@ -81,7 +81,7 @@
             android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse" />
 
         <TextView
-            android:text="0"
+            android:text=""
             android:layout_height="wrap_content"
             android:id="@+id/textView_caloriesval"
             android:layout_below="@+id/textViewForCalories"
@@ -91,7 +91,7 @@
             android:layout_width="wrap_content" />
 
         <TextView
-            android:text="Steps"
+            android:text="@string/steps"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewforSteps"
@@ -105,7 +105,7 @@
             android:textSize="18sp" />
 
         <TextView
-            android:text="Calories"
+            android:text="@string/calories"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textViewForCalories"
@@ -120,7 +120,7 @@
 
         <TextView
             android:id="@+id/textView_distance"
-            android:text="0"
+            android:text=""
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="@style/TextAppearance.AppCompat.Title.Inverse"
@@ -147,7 +147,7 @@
 
     <TextView
         android:id="@+id/lifetime_stats"
-        android:text="Lifetime Totals"
+        android:text="@string/lifetime_totals"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
@@ -282,7 +282,7 @@
 
     <TextView
         android:id="@+id/lifetime_stats_graph"
-        android:text="Chart View Of Totals"
+        android:text="@string/chart_view_of_totals"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -303,7 +303,7 @@
 
     <TextView
         android:id="@+id/calories_stats"
-        android:text="Calories"
+        android:text="@string/calories_stats"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
@@ -315,7 +315,7 @@
 
     <TextView
         android:id="@+id/calories_stats_today"
-        android:text="Today Vs Average"
+        android:text="@string/today_vs_average"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -335,7 +335,7 @@
 
     <TextView
         android:id="@+id/calories_stats_week"
-        android:text="This Week (tap for info)"
+        android:text="@string/this_week_tap_for_info"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -360,7 +360,7 @@
 
     <TextView
         android:id="@+id/steps_stats"
-        android:text="Steps"
+        android:text="@string/steps_stats"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
@@ -372,7 +372,7 @@
 
     <TextView
         android:id="@+id/steps_stats_today"
-        android:text="Today Vs Average"
+        android:text="@string/today_vs_average_steps"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -393,7 +393,7 @@
 
     <TextView
         android:id="@+id/steps_stats_week"
-        android:text="This Week (tap for info)"
+        android:text="@string/this_week_tap_for_info_Steps"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -417,7 +417,7 @@
 
     <TextView
         android:id="@+id/distance_stats"
-        android:text="Distance"
+        android:text="@string/distance_stats"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
@@ -430,7 +430,7 @@
 
     <TextView
         android:id="@+id/distance_stats_today"
-        android:text="Today Vs Average"
+        android:text="@string/today_vs_average_distance"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -450,7 +450,7 @@
 
     <TextView
         android:id="@+id/distance_stats_week"
-        android:text="This Week"
+        android:text="@string/this_week_distance"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -472,7 +472,7 @@
 
     <TextView
         android:id="@+id/time_stats"
-        android:text="Time Active"
+        android:text="@string/time_active_stats"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Holo.Large"
@@ -484,7 +484,7 @@
 
     <TextView
         android:id="@+id/time_stats_today"
-        android:text="Today Vs Average"
+        android:text="@string/today_vs_average_time"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
@@ -504,7 +504,7 @@
 
     <TextView
         android:id="@+id/time_stats_week"
-        android:text="This Week (tap for info)"
+        android:text="@string/this_week_tap_for_info_time"
         android:layout_width="348dp"
         android:layout_height="wrap_content"
         android:textAppearance="@android:style/TextAppearance.Large"
